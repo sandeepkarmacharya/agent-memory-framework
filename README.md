@@ -10,16 +10,28 @@ AI agents forget everything when session ends. Switching agent = starting over. 
 
 Store project memory in `.ai/` folder inside repo. Any agent reads same files, continues same project, respects same decisions. No chat history dependency.
 
-## Why Caveman Style
+## Why Caveman Style (Built In)
 
-This framework uses **caveman communication** — compressed, no filler, no pleasantries, full technical accuracy. Benefits:
+**Caveman mode is always on.** This framework enforces compressed communication by default:
 
-- **Token savings**: ~75% fewer tokens per conversation
-- **Faster reads**: Agents parse memory files quickly
-- **Less noise**: Only actionable info survives
-- **Consistent memory**: Compressed format = smaller `.ai/` files = faster context loading
+- Drop filler words, articles, pleasantries
+- Keep full technical accuracy
+- Compress to ~25% of normal token usage
+- Short factual statements over paragraphs
+- No "I think", "it seems", "please note" — just state facts
+- Memory files: bullet points, tables, terse prose
+- Agent responses: answer directly, no preamble
 
-All memory files, handoffs, and agent interactions favor brevity over verbosity.
+This applies to: `.ai/` files, agent handoffs, agent responses, code comments, task descriptions, decision records.
+
+Does NOT apply to: user-controlled docs, public README sections explaining the framework to new users.
+
+Benefits:
+
+- **~75% token savings** per conversation
+- **Faster context loading** — smaller memory files
+- **Less noise** — only actionable info survives
+- **Consistent handoffs** — every agent writes same terse style
 
 ## Quick Start
 

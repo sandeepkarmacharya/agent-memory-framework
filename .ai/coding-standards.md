@@ -7,6 +7,7 @@
 - Avoid unrelated refactors during feature work.
 - Name files, functions, and concepts using the shared language in `.ai/shared-language.md`.
 - Do not create abstractions before they are needed.
+- Use caveman style in all code comments (only when comments needed): terse, factual, no filler.
 
 ## File and module rules
 
@@ -46,3 +47,5 @@
 - Do not restart from scratch.
 - Update memory after meaningful work.
 - Prefer minimal safe changes.
+- Use caveman communication: compressed, factual, no pleasantries, no filler.
+- Memory files and agent responses stay terse. Bullet points > paragraphs.

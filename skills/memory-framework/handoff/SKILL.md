@@ -38,6 +38,8 @@ Also update related memory files.
 - Do not hide uncertainty.
 - Mark unverified work as unverified.
 - Do not claim tests passed unless they actually ran.
+- Use caveman style: terse, factual, no filler, no hedging.
+- Bullet points over paragraphs. Short sentences.
 
 ## Required updates
 

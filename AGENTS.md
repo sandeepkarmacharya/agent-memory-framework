@@ -33,6 +33,22 @@ For brand-new setup, also read:
 - Do not store secrets, tokens, credentials, private keys, or personal sensitive data in `.ai/` files.
 - Keep memory files useful, concise, and current.
 
+## Caveman mode (always on)
+
+All agent communication and memory files use caveman style:
+
+- Drop filler words, articles, pleasantries
+- Keep full technical accuracy
+- Compress to ~25% of normal token usage
+- Prefer short factual statements over paragraphs
+- No "I think", "it seems", "please note" — just state facts
+- Memory files: bullet points, tables, terse prose
+- Agent responses: answer directly, no preamble, no summary unless asked
+
+This applies to: `.ai/` file content, agent-handoff.md, agent responses, code comments (only when comments are needed), task descriptions, decision records.
+
+Caveman does NOT apply to: user-facing docs the human controls, public README sections explaining the framework to new users.
+
 ## Required memory updates
 
 After every meaningful task, update:
