@@ -11,7 +11,7 @@ AI agents forget everything when the session ends. Switching agents means starti
 - **Context pack generator** — `context "<task>"` returns continuity files + ranked relevant memory within an approximate token budget
 - **BM25 retrieval layer** — ranked full-text search across memory files; agents query specific context instead of reading everything (saves ~50-80% token overhead)
 - **Repo importer** — bootstrap `.ai/` from any existing project by scanning source code, dependencies, and structure
-- **CLI tool** — `init`, `validate`, `compress`, `context`, `index`, `query`, `search`, `import`, `suggest`
+- **CLI tool** — `init`, `validate`, `compress`, `context`, `finish`, `index`, `query`, `search`, `import`, `suggest`
 - **13 slash-command skills** — `/new`, `/continue`, `/handoff`, `/debug`, `/feature`, `/review`, etc.
 - **Pre-commit hook** — automatic memory validation + index rebuild before every `git commit`
 - **Git-aware suggestions** — `suggest` command analyzes recent changes and proposes memory updates
@@ -104,6 +104,7 @@ python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
 python scripts/agent-memory validate    # Check all files exist and have content
 python scripts/agent-memory compress    # Compress bloated memory files
 python scripts/agent-memory context "fix auth bug" --budget 4000  # Compact context pack for a task
+python scripts/agent-memory finish --summary "fixed auth bug" --next "add regression tests"  # Update memory after work
 python scripts/agent-memory index       # Build BM25 search index for retrieval
 python scripts/agent-memory query "..." # Ranked full-text search across memory
 python scripts/agent-memory search ...  # Find which files contain a term
@@ -150,6 +151,21 @@ The context pack includes:
 - Ranked relevant memory from the BM25 index
 - A `Files To Read Fully` list for deeper follow-up
 - Approximate token-budget truncation for large memory files
+
+### `finish`
+
+Updates core memory at the end of a task:
+
+```bash
+python scripts/agent-memory finish --summary "fixed auth redirect bug" --next "add regression tests"
+```
+
+This command:
+- Appends a finish section to `.ai/agent-handoff.md`
+- Appends latest progress to `.ai/current-state.md`
+- Appends done/next task entries to `.ai/task-board.md`
+- Records changed and untracked files from Git
+- Rebuilds the BM25 memory index
 
 ### `index`
 

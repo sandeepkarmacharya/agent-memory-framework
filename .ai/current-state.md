@@ -42,3 +42,9 @@ Building.
 
 - Date: 2026-05-18
 - Agent/tool: Hermes / GPT-5.5 Codex
+
+## 2026-05-18 — Latest Progress
+
+- Latest progress: Added finish command to update core memory after tasks
+- Next recommended task: Add install command for drop-in setup
+- Last updated: 2026-05-18

@@ -75,3 +75,14 @@ Continue one step: implement agent-memory finish --summary with tests first.
 
 - Date: 2026-05-18
 - Agent/tool: Hermes / GPT-5.5 Codex
+
+## 2026-05-18 — Finish
+
+- Summary: Added finish command to update core memory after tasks
+- Next: Add install command for drop-in setup
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `skills/README.md`
+- `tests/test_finish_command.py`

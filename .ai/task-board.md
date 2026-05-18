@@ -35,3 +35,11 @@ Ideas useful but not urgent:
 
 - Memory quality score: freshness/coverage/bloat/staleness risk.
 - Smart compression with archive for old completed tasks.
+
+## 2026-05-18 — Task Update
+
+### Done
+- Added finish command to update core memory after tasks
+
+### Next
+- Add install command for drop-in setup

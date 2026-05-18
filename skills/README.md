@@ -28,6 +28,7 @@ The `scripts/agent-memory` Python CLI complements these skills and should be the
 - `python scripts/agent-memory validate` — integrity check
 - `python scripts/agent-memory compress` — basic file compression (pre-step before `/compress-memory`)
 - `python scripts/agent-memory context "<task>"` — compact task-specific context pack before work
+- `python scripts/agent-memory finish --summary "<done>"` — update core memory after work
 - `python scripts/agent-memory index` — build BM25 retrieval index
 - `python scripts/agent-memory query "<terms>"` — ranked memory retrieval
 - `python scripts/agent-memory search <term>` — grep-like memory search

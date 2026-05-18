@@ -38,6 +38,38 @@ Revisit when:
 - Adding `finish`/`install` runtime commands.
 - Context command becomes unavailable in target agent environments.
 
+## 2026-05-18 — Add finish command as task-end automation
+
+Status: Accepted
+
+Context:
+- Framework needs automatic task-end memory updates so users/agents do not memorize handoff/current-state/task-board update rules.
+- Context command handles task start; task end still needed a symmetric runtime command.
+
+Decision:
+- Add `agent-memory finish --summary "<done>" --next "<next>"`.
+- Command appends to handoff/current-state/task-board, records Git changed/untracked files, rebuilds BM25 index.
+
+Reason:
+- Gives agents one obvious command after work.
+- Keeps memory fresh with less manual instruction-following.
+- Preserves existing memory by appending instead of rewriting.
+
+Impact:
+- `scripts/agent-memory`
+- `README.md`
+- `AGENTS.md`
+- `skills/README.md`
+- `tests/test_finish_command.py`
+
+Tradeoffs:
+- Appends simple sections; does not yet intelligently rewrite stale sections.
+- Git changed-file list is file-level only, not semantic.
+
+Revisit when:
+- Adding smart memory rewrite/compression.
+- Adding LLM-assisted summarization.
+
 ## Superseded decisions
 
 None yet.

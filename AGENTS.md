@@ -35,6 +35,7 @@ A `scripts/agent-memory` CLI is available for common operations:
 | `python scripts/agent-memory validate` | Check all files exist and have valid content |
 | `python scripts/agent-memory compress` | Compress bloated memory files |
 | `python scripts/agent-memory context "<task>"` | Build compact task-specific context pack |
+| `python scripts/agent-memory finish --summary "<done>"` | Update core memory after a task |
 | `python scripts/agent-memory index` | Build BM25 search index for retrieval |
 | `python scripts/agent-memory query "<terms>"` | **Ranked full-text search** across all memory |
 | `python scripts/agent-memory search <term>` | Find which files contain a term |
@@ -102,7 +103,13 @@ Caveman does NOT apply to: user-facing docs the human controls, public README se
 
 ## Required memory updates
 
-After every meaningful task, update:
+After every meaningful task, run:
+
+```bash
+python scripts/agent-memory finish --summary "<what changed>" --next "<next task>"
+```
+
+This updates core memory and rebuilds the retrieval index. If the command is unavailable, manually update:
 
 - `.ai/current-state.md` — progress, blockers, next step
 - `.ai/task-board.md` — move tasks between Next/In Progress/Backlog/Done
