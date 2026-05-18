@@ -48,3 +48,9 @@ Building.
 - Latest progress: Added finish command to update core memory after tasks
 - Next recommended task: Add install command for drop-in setup
 - Last updated: 2026-05-18
+
+## 2026-05-18 — Latest Progress
+
+- Latest progress: added drop-in install command for target projects
+- Next recommended task: add automatic background memory optimization hooks
+- Last updated: 2026-05-18

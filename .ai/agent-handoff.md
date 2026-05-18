@@ -86,3 +86,13 @@ Continue one step: implement agent-memory finish --summary with tests first.
 - `scripts/agent-memory`
 - `skills/README.md`
 - `tests/test_finish_command.py`
+
+## 2026-05-18 — Finish
+
+- Summary: added drop-in install command for target projects
+- Next: add automatic background memory optimization hooks
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `tests/test_install_command.py`

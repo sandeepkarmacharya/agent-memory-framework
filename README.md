@@ -11,7 +11,7 @@ AI agents forget everything when the session ends. Switching agents means starti
 - **Context pack generator** — `context "<task>"` returns continuity files + ranked relevant memory within an approximate token budget
 - **BM25 retrieval layer** — ranked full-text search across memory files; agents query specific context instead of reading everything (saves ~50-80% token overhead)
 - **Repo importer** — bootstrap `.ai/` from any existing project by scanning source code, dependencies, and structure
-- **CLI tool** — `init`, `validate`, `compress`, `context`, `finish`, `index`, `query`, `search`, `import`, `suggest`
+- **CLI tool** — `install`, `init`, `validate`, `compress`, `context`, `finish`, `index`, `query`, `search`, `import`, `suggest`
 - **13 slash-command skills** — `/new`, `/continue`, `/handoff`, `/debug`, `/feature`, `/review`, etc.
 - **Pre-commit hook** — automatic memory validation + index rebuild before every `git commit`
 - **Git-aware suggestions** — `suggest` command analyzes recent changes and proposes memory updates
@@ -24,44 +24,30 @@ AI agents forget everything when the session ends. Switching agents means starti
 ### 1. Install the framework in your repo
 
 ```bash
-# Copy these files to your repo root:
-#   AGENTS.md            -> Agent instructions (required entry point)
-#   scripts/agent-memory -> CLI tool
-#   skills/              -> Skill definitions (13 slash commands)
-#   claude.md            -> Claude Code integration
-#   .cursorrules         -> Cursor integration
-#   .githooks/           -> Pre-commit hook
+# From a local clone of this framework repo:
+python scripts/agent-memory install --target /path/to/your/project
 
-# Or clone the template repo:
-git clone https://github.com/sandeepkarmacharya/agent-memory-framework.git my-project
+# Or install into the current directory:
+python scripts/agent-memory install --target .
 ```
 
-### 2. Initialize memory
+This copies `AGENTS.md`, `scripts/agent-memory`, the retrieval package, `.ai/` templates, and `.githooks/pre-commit` into the target project. Existing project files are preserved. If the target is a Git repo, the installer enables `core.hooksPath = .githooks` automatically.
+
+### 2. Start working with your agent
 
 ```bash
-python scripts/agent-memory init
+python scripts/agent-memory context "<task>"
 ```
 
-This creates a full `.ai/` directory with all 14+ memory files, each containing templates with examples to guide you.
+Agents should use the context pack first, then read only the files listed under `Files To Read Fully`.
 
-### 3. Enable the pre-commit hook
+### 3. Finish work and update memory
 
 ```bash
-git config core.hooksPath .githooks
+python scripts/agent-memory finish --summary "fixed auth bug" --next "add regression tests"
 ```
 
-Now every commit runs `agent-memory validate` automatically. Commits with missing or empty memory files are blocked.
-
-### 4. Start working with your agent
-
-```
-/new               -> Start a new project with memory
-/continue          -> Resume an existing project
-/feature           -> Add a new feature
-/debug             -> Diagnose and fix a bug
-```
-
-If your agent doesn't support slash commands, paste the content of the matching skill file from `skills/memory-framework/`.
+This updates handoff/current-state/task-board and rebuilds the retrieval index. The user does not need to memorize slash commands; the repo-level `AGENTS.md` tells agents to run these commands automatically.
 
 ## Memory Files
 
@@ -100,6 +86,7 @@ The old `graph-memory.md` was plain text — agents parsed it inconsistently and
 ## CLI Reference
 
 ```bash
+python scripts/agent-memory install --target ../my-project  # Drop-in setup for another project
 python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
 python scripts/agent-memory validate    # Check all files exist and have content
 python scripts/agent-memory compress    # Compress bloated memory files
@@ -111,6 +98,24 @@ python scripts/agent-memory search ...  # Find which files contain a term
 python scripts/agent-memory import ...  # Bootstrap .ai/ from existing project
 python scripts/agent-memory suggest     # Propose memory updates from git diff
 ```
+
+### `install`
+
+Installs the framework into another project in one command:
+
+```bash
+python scripts/agent-memory install --target ../my-project
+```
+
+Behavior:
+- Creates the target directory if needed
+- Copies `AGENTS.md` only when missing; never overwrites existing project instructions
+- Creates `.ai/` memory templates
+- Copies `scripts/agent-memory` and `scripts/memory_query/`
+- Creates `.githooks/pre-commit`
+- Enables `git config core.hooksPath .githooks` when the target is a Git repo
+
+Use this for existing app projects. Use `init` only inside a repo that already has this CLI and `AGENTS.md`.
 
 ### `init`
 

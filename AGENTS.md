@@ -23,7 +23,7 @@ Fallback only: if the CLI is unavailable, manually read the smallest useful set:
 5. `.ai/architecture.md` when architecture/files/APIs matter
 6. `.ai/bugs-and-fixes.md` when debugging or touching fragile areas
 
-For brand-new setup, run `python scripts/agent-memory init` first, then use `context`.
+For brand-new setup from this framework repo, run `python scripts/agent-memory install --target <project>` first. Inside an already-installed project, run `python scripts/agent-memory init` to repair missing memory files, then use `context`.
 
 ## CLI tool
 
@@ -31,6 +31,7 @@ A `scripts/agent-memory` CLI is available for common operations:
 
 | Command | Action |
 |---|---|
+| `python scripts/agent-memory install --target <path>` | Drop-in install into another project |
 | `python scripts/agent-memory init` | Initialize or repair `.ai/` memory files |
 | `python scripts/agent-memory validate` | Check all files exist and have valid content |
 | `python scripts/agent-memory compress` | Compress bloated memory files |

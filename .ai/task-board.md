@@ -43,3 +43,11 @@ Ideas useful but not urgent:
 
 ### Next
 - Add install command for drop-in setup
+
+## 2026-05-18 — Task Update
+
+### Done
+- added drop-in install command for target projects
+
+### Next
+- add automatic background memory optimization hooks

@@ -4,10 +4,12 @@
 
 | Suite | Pass | Fail | Skip | Coverage |
 |---|---:|---:|---:|---|
-| pytest | 6 | 0 | 0 | Not measured |
+| pytest | 8 | 0 | 0 | Not measured |
 
 ## Recent Runs
 
+- [2026-05-18] `python -m pytest tests/test_install_command.py -q` -> 2 passed.
+- [2026-05-18] `python -m pytest -q` -> 8 passed.
 - [2026-05-18] `python -m pytest tests/test_finish_command.py -q` -> 2 passed.
 - [2026-05-18] `python -m py_compile scripts/agent-memory scripts/memory_query/indexer.py scripts/memory_query/importer.py` -> passed.
 - [2026-05-18] `python -m pytest -q` -> 6 passed.

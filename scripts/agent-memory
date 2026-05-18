@@ -7,6 +7,7 @@ Usage:
     agent-memory compress      Compress bloated memory files (auto-summarize)
     agent-memory context       Build compact context pack for a task
     agent-memory finish        Update core memory after a task
+    agent-memory install       Install framework into another project
 
 Install as:
     chmod +x scripts/agent-memory
@@ -22,6 +23,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -445,6 +447,92 @@ def cmd_init(args):
 
     print(f"\nDone: {created} files created, {skipped} already existed")
     print("Run 'git config core.hooksPath .githooks' to enable pre-commit validation.")
+
+
+def _copytree_clean(src: Path, dst: Path) -> None:
+    """Copy a directory while skipping local Python caches."""
+    shutil.copytree(
+        src,
+        dst,
+        dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+
+
+def _source_root() -> Path:
+    """Return the framework repo/root that contains this CLI."""
+    return Path(__file__).resolve().parents[1]
+
+
+def cmd_install(args):
+    """Install the framework into a target project without requiring prior setup."""
+    source_root = _source_root()
+    target = Path(args.target).expanduser().resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    ai_dir = target / ".ai"
+    ai_dir.mkdir(parents=True, exist_ok=True)
+
+    created = 0
+    skipped = 0
+
+    agents_src = source_root / "AGENTS.md"
+    agents_dst = target / "AGENTS.md"
+    if agents_dst.exists():
+        _warn("AGENTS.md already exists — leaving project instructions unchanged")
+        skipped += 1
+    else:
+        agents_dst.write_text(agents_src.read_text(encoding="utf-8"), encoding="utf-8")
+        _info("Created AGENTS.md")
+        created += 1
+
+    for fname, content in TEMPLATES.items():
+        path = ai_dir / fname
+        if path.exists():
+            _warn(f".ai/{fname} already exists")
+            skipped += 1
+        else:
+            path.write_text(content.strip() + "\n", encoding="utf-8")
+            _info(f"Created .ai/{fname}")
+            created += 1
+
+    scripts_dir = target / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    cli_dst = scripts_dir / "agent-memory"
+    shutil.copy2(source_root / "scripts" / "agent-memory", cli_dst)
+    cli_dst.chmod(0o755)
+    _info("Installed scripts/agent-memory")
+
+    _copytree_clean(source_root / "scripts" / "memory_query", scripts_dir / "memory_query")
+    _info("Installed scripts/memory_query")
+
+    hooks_dir = target / ".githooks"
+    hooks_dir.mkdir(parents=True, exist_ok=True)
+    hook_path = hooks_dir / "pre-commit"
+    if hook_path.exists():
+        _warn(".githooks/pre-commit already exists")
+    else:
+        hook_path.write_text(_precommit_hook_script().strip() + "\n", encoding="utf-8")
+        hook_path.chmod(0o755)
+        _info("Created .githooks/pre-commit")
+
+    if (target / ".git").exists():
+        result = subprocess.run(
+            ["git", "config", "core.hooksPath", ".githooks"],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            _info("Enabled pre-commit validation (core.hooksPath = .githooks)")
+        else:
+            _warn("Could not enable git hook automatically; run: git config core.hooksPath .githooks")
+    else:
+        _warn("No .git directory found; skipped git hook enablement")
+
+    print(f"\nInstalled Agent Memory Framework in {target}")
+    print(f"Done: {created} files created, {skipped} existing files preserved")
+    print('Next: python scripts/agent-memory context "<task>"')
 
 
 def cmd_validate(args):
@@ -950,6 +1038,7 @@ def main():
   agent-memory compress        Reduce bloat in memory files
   agent-memory context "task"  Build compact context pack for a task
   agent-memory finish --summary "done"  Update memory after a task
+  agent-memory install --target ../app  Install into another project
   agent-memory index           Build BM25 search index
   agent-memory query "terms"   BM25 search (ranked results)
   agent-memory search <term>   Find files containing term
@@ -978,6 +1067,10 @@ def main():
     fin_p.add_argument("--summary", required=True, help="Concise summary of completed work")
     fin_p.add_argument("--next", default="", help="Recommended next task")
     fin_p.set_defaults(func=cmd_finish)
+
+    install_p = sub.add_parser("install", help="Install framework into another project")
+    install_p.add_argument("--target", default=".", help="Target project directory (default: current directory)")
+    install_p.set_defaults(func=cmd_install)
 
     idx_p = sub.add_parser("index", help="Build BM25 search index for .ai/ files")
     idx_p.set_defaults(func=cmd_index)
