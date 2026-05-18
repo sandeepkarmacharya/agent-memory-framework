@@ -16,13 +16,13 @@ Fix bugs without random changes or context loss.
 2. `.ai/current-state.md`
 3. `.ai/bugs-and-fixes.md`
 4. `.ai/architecture.md`
-5. `.ai/graph-memory.md`
+5. `.ai/graph-memory.yaml`
 6. `.ai/agent-handoff.md`
 
 ## Workflow
 
 1. Reproduce or characterize the issue.
-2. Identify affected feature, files, APIs, and data using `.ai/graph-memory.md`.
+2. Identify affected feature, files, APIs, and data using `.ai/graph-memory.yaml`.
 3. Form a specific hypothesis.
 4. Inspect the smallest relevant area.
 5. Apply the smallest safe fix.
@@ -41,6 +41,6 @@ Fix bugs without random changes or context loss.
 - `.ai/bugs-and-fixes.md`
 - `.ai/current-state.md`
 - `.ai/agent-handoff.md`
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/task-board.md` if new work is discovered
 

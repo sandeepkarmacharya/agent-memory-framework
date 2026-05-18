@@ -1,78 +1,69 @@
 # Agent Memory Framework
 
-Repo-based memory system for AI agents. Zero context loss across sessions, models, tools.
+**Repo-based persistent memory for AI agents.** Zero context loss across sessions, models, and tools.
 
-## Problem
+AI agents forget everything when the session ends. Switching agents means starting over. This framework stores project memory in `.ai/` files inside your repo — any agent reads the same files, continues the same project, respects the same decisions. No chat history dependency.
 
-AI agents forget everything when session ends. Switching agent = starting over. Chat history is unreliable memory. Token waste repeating same context.
+## Features
 
-## Solution
-
-Store project memory in `.ai/` folder inside repo. Any agent reads same files, continues same project, respects same decisions. No chat history dependency.
-
-## Why Caveman Style (Built In)
-
-**Caveman mode is always on.** This framework enforces compressed communication by default:
-
-- Drop filler words, articles, pleasantries
-- Keep full technical accuracy
-- Compress to ~25% of normal token usage
-- Short factual statements over paragraphs
-- No "I think", "it seems", "please note" — just state facts
-- Memory files: bullet points, tables, terse prose
-- Agent responses: answer directly, no preamble
-
-This applies to: `.ai/` files, agent handoffs, agent responses, code comments, task descriptions, decision records.
-
-Does NOT apply to: user-controlled docs, public README sections explaining the framework to new users.
-
-Benefits:
-
-- **~75% token savings** per conversation
-- **Faster context loading** — smaller memory files
-- **Less noise** — only actionable info survives
-- **Consistent handoffs** — every agent writes same terse style
+- **13 memory file types** — state, decisions, tasks, architecture, bugs, deps, test results, security, API contracts, shared language, more
+- **Structured YAML graph memory** — machine-readable relationship maps between features, files, APIs, data, bugs
+- **CLI tool** — `agent-memory init`, `validate`, `compress` from the terminal
+- **13 slash-command skills** — `/new`, `/continue`, `/handoff`, `/debug`, `/feature`, `/review`, etc.
+- **Pre-commit hook** — automatic memory validation before every `git commit`
+- **Caveman mode** — terse communication saves ~75% token usage
+- **IDE integration** — `claude.md` and `.cursorrules` included for zero-config agent onboarding
+- **Agent-agnostic** — works with Claude Code, Cursor, Continue, opencode, Hermes Agent, and any tool that reads repo files
 
 ## Quick Start
 
-### 1. Install
+### 1. Install the framework in your repo
 
-Copy these into your repo root:
+```bash
+# Copy these files to your repo root:
+#   AGENTS.md            -> Agent instructions (required entry point)
+#   scripts/agent-memory -> CLI tool
+#   skills/              -> Skill definitions (13 slash commands)
+#   claude.md            -> Claude Code integration
+#   .cursorrules         -> Cursor integration
+#   .githooks/           -> Pre-commit hook
 
-```
-AGENTS.md          -> Agent instructions (required entry point)
-skills/            -> Skill definitions (13 slash commands)
-```
-
-### 2. Initialize
-
-```
-/setup-memory
-```
-
-Creates `.ai/` folder with all memory files.
-
-### 3. Build
-
-```
-/new               -> Start new project
-/continue          -> Resume existing project
-/feature           -> Add feature
+# Or clone the template repo:
+git clone https://github.com/sandeepkarmacharya/agent-memory-framework.git my-project
 ```
 
-### 4. Maintain
+### 2. Initialize memory
+
+```bash
+python scripts/agent-memory init
+```
+
+This creates a full `.ai/` directory with all 14+ memory files, each containing templates with examples to guide you.
+
+### 3. Enable the pre-commit hook
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Now every commit runs `agent-memory validate` automatically. Commits with missing or empty memory files are blocked.
+
+### 4. Start working with your agent
 
 ```
-/update-memory     -> After meaningful work
-/handoff           -> Before switching agents
-/status            -> Check current state
+/new               -> Start a new project with memory
+/continue          -> Resume an existing project
+/feature           -> Add a new feature
+/debug             -> Diagnose and fix a bug
 ```
+
+If your agent doesn't support slash commands, paste the content of the matching skill file from `skills/memory-framework/`.
 
 ## Memory Files
 
-All stored in `.ai/` folder:
+All stored in `.ai/`. The CLI creates templates with real-world examples for every file.
 
-| File | Purpose | Update when |
+| File | Purpose | Update When |
 |---|---|---|
 | `project-brief.md` | Goals, audience, scope, constraints | Project scope changes |
 | `current-state.md` | What's built, broken, blocked, next | Any progress happens |
@@ -80,70 +71,137 @@ All stored in `.ai/` folder:
 | `task-board.md` | Tasks: next, in-progress, backlog, done | Tasks change state |
 | `architecture.md` | Structure, data flow, APIs, deployment | Architecture changes |
 | `coding-standards.md` | Code rules for agents and humans | Standards change |
-| `bugs-and-fixes.md` | Bug log: symptoms, causes, fixes, risks | Bugs found or fixed |
-| `agent-handoff.md` | Session summary for next agent | Before stopping |
-| `graph-memory.md` | Relationship map: features, files, APIs, data | Dependencies change |
+| `bugs-and-fixes.md` | Bug log with root causes and fixes | Bugs found or fixed |
+| `agent-handoff.md` | Session summary for next agent | Before stopping/switch |
+| `graph-memory.yaml` | **Structured** relationship map | Dependencies change |
 | `shared-language.md` | Domain terms and naming conventions | New terms emerge |
-| `memory-index.md` | Read priority and update rules | File purposes change |
+| `memory-index.md` | Read priority and update rules | — (stable reference) |
+| `test-results.md` | Test suite results and coverage | Tests pass or fail |
+| `dependencies.md` | Runtime, dev, and system dependencies | Deps added or changed |
+| `security.md` | Threat model, audits, vulnerabilities | Security changes |
+| `api-contracts.md` | API routes, schemas, auth requirements | API surface changes |
+| `performance.md` | Benchmarks and profiles | Benchmarks run |
+| `data-migrations.md` | Migration history and rollback plans | Migrations occur |
+| `prompts.md` | Reusable prompts for agents without slash commands | New prompts created |
+| `session-log.md` | Human-readable chronological notes | Useful to document |
+
+### Why YAML for graph memory?
+
+The old `graph-memory.md` was plain text — agents parsed it inconsistently and couldn't query relationships reliably. The new `graph-memory.yaml` is machine-readable:
+- JSON-friendly (YAML is a superset)
+- Agents can query specific relationships without regex
+- Diff-compatible (git sees exact field changes)
+- Can be used programmatically by other tools
+
+## CLI Reference
+
+```bash
+python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
+python scripts/agent-memory validate    # Check all files exist and have content
+python scripts/agent-memory compress    # Deduplicate and compress bloated files
+```
+
+### `init`
+
+Creates any missing `.ai/` files from templates. Safe to run on existing projects — existing files are never overwritten.
+- Creates all 14+ memory files with example content
+- Creates `.githooks/pre-commit` hook script
+- Also creates optional recommended files (performance, data-migrations, prompts, session-log)
+
+### `validate`
+
+Checks required and recommended files:
+- Verifies `AGENTS.md` exists and is non-empty
+- Checks all required `.ai/` files exist and have been filled in (warns on unchanged templates)
+- Reports missing recommended files
+- Checks skill directory completeness
+- Reports pre-commit hook status
+
+### `compress`
+
+Reduces bloat in memory files without losing important context:
+- Collapses repeated empty lines
+- Deduplicates exact repeated lines (longer than 20 chars)
+- Skips files that are already compact (under 50 bytes)
+
+For deeper compression, use the `/compress-memory` skill which intelligently preserves decisions, active tasks, and unresolved bugs.
 
 ## Slash Commands
 
-| Command | Action | When to use |
+| Command | Action | When to Use |
 |---|---|---|
 | `/setup-memory` | Initialize/repair memory files | First time setup |
-| `/new` | Start new project | Blank repo |
+| `/new` | Start new project with full memory | Blank repo |
 | `/continue` | Resume from memory | Returning to project |
 | `/handoff` | Prepare for agent switch | Ending session |
 | `/update-memory` | Sync memory with code changes | After meaningful work |
-| `/compress-memory` | Shrink bloated memory files | Files too long/repetitive |
+| `/compress-memory` | Shrink bloated memory files | Files too long |
 | `/debug` | Disciplined bug diagnosis | Bug reported |
-| `/feature` | Add feature as vertical slice | New feature requested |
-| `/review` | Code/architecture review | Quality check needed |
-| `/graphify` | Update dependency graph | Relationships unclear |
+| `/feature` | Add feature as vertical slice | New feature |
+| `/review` | Code/architecture review | Quality check |
+| `/graphify` | Update dependency relationships | Relationships unclear |
 | `/status` | Current state summary | "Where are we?" |
 | `/architecture` | Improve system design | Structure needs work |
 | `/sync-decisions` | Align decisions with code | Decisions stale |
+
+## Agent Compatibility
+
+Works with **any** AI coding agent that can read repo files and follow instructions.
+
+### Claude Code
+`claude.md` is provided in the repo root. Claude Code reads it automatically and follows the memory framework.
+
+### Cursor
+`.cursorrules` is provided in the repo root. Cursor loads it automatically when you open the project.
+
+### Other Agents (Continue, opencode, Hermes Agent, etc.)
+The agent reads `AGENTS.md` → loads `.ai/` memory files → executes slash commands via skills folder. The `prompts.md` file contains reusable prompts for agents that don't support skill loading.
 
 ## How It Works
 
 ```
 Agent starts
   -> reads AGENTS.md
-  -> reads .ai/ memory files
+  -> reads .ai/ memory files (in priority order)
   -> understands full project context
   -> does work
-  -> updates .ai/ files
+  -> updates .ai/ files (current-state, task-board, handoff, etc.)
   -> writes handoff for next agent
 ```
 
-Next agent (same or different model/tool) picks up exactly where previous left off. Zero chat history needed.
+Next agent — same or different model/tool — picks up exactly where the previous one left off. **Zero chat history needed.**
 
-## Operating Principles
-
-1. **Never start from scratch** — read memory first
-2. **Smallest useful change** — vertical slices, not rewrites
-3. **Test or validate** — mark unverified work as unverified
-4. **Update memory** — after every meaningful task
-5. **No secrets** — never store credentials in `.ai/`
-6. **Caveman communication** — compressed, accurate, no filler
-
-## Folder Structure
+## File structure in any project
 
 ```
 your-repo/
-  AGENTS.md              <- Agent entry point
+  AGENTS.md               <- Agent entry point (required)
+  claude.md                <- Claude Code integration
+  .cursorrules             <- Cursor integration
+  .githooks/
+    pre-commit             <- Validation hook
   .ai/
-    agent-handoff.md     <- Session handoff
-    current-state.md     <- What's built/broken/next
-    decisions.md         <- Important choices
-    task-board.md        <- Task tracking
-    architecture.md      <- System design
-    graph-memory.md      <- Relationship map
-    bugs-and-fixes.md    <- Bug log
-    coding-standards.md  <- Code rules
-    shared-language.md   <- Domain terms
-    memory-index.md      <- File guide
-    project-brief.md     <- Project goals
+    agent-handoff.md       <- Session handoff
+    current-state.md       <- What's built/broken/next
+    decisions.md           <- Important choices
+    task-board.md          <- Task tracking
+    architecture.md        <- System design
+    graph-memory.yaml      <- Relationship map (structured)
+    bugs-and-fixes.md      <- Bug log
+    test-results.md        <- Test suite status
+    dependencies.md        <- Dependency inventory
+    security.md            <- Threat model & audits
+    api-contracts.md       <- API surface
+    coding-standards.md    <- Code rules
+    shared-language.md     <- Domain terms
+    project-brief.md       <- Project goals
+    memory-index.md        <- File guide
+    performance.md         <- Benchmarks (optional)
+    data-migrations.md     <- Migration history (optional)
+    prompts.md             <- Reusable prompts (optional)
+    session-log.md         <- Chronological notes (optional)
+  scripts/
+    agent-memory           <- CLI tool
   skills/
     memory-framework/
       setup-memory/SKILL.md
@@ -161,20 +219,39 @@ your-repo/
       sync-decisions/SKILL.md
 ```
 
-## Agent Compatibility
+## Operating Principles
 
-Works with any AI coding agent that can:
-- Read files from repo
-- Follow instructions in `AGENTS.md`
-- Execute slash commands or load skill files
+1. **Never start from scratch** — read memory first
+2. **Smallest useful change** — vertical slices, not rewrites
+3. **Test or validate** — mark unverified work explicitly
+4. **Update memory** — after every meaningful task
+5. **No secrets** — never store credentials in `.ai/`
+6. **Caveman communication** — compressed, accurate, no filler
 
-Tested with: Claude Code, Cursor, Continue, opencode, and similar tools.
+## Caveman Mode
+
+All agent communication and memory files use a compressed, factual style:
+
+- Drop filler words, articles, pleasantries
+- Keep full technical accuracy
+- Compress to ~25% of normal token usage
+- Bullet points over paragraphs
+- No "I think", "it seems", "please note" — just state facts
+- Agent responses: answer directly, no preamble, no summary unless asked
+
+Applies to: `.ai/` files, agent responses, code comments, task descriptions, decision records.
+
+Does **not** apply to: user-facing docs, public README sections explaining the framework.
 
 ## Task Completion Standard
 
-Task not done until:
+A task is not done until:
 
 1. Work completed or blocker explained
 2. Change validated (test or manual check)
 3. Memory files updated
 4. Handoff written for next agent
+
+## License
+
+MIT

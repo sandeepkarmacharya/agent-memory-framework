@@ -1,30 +1,56 @@
-.ai/agent-handoff.md
-.ai/architecture.md
-.ai/bugs-and-fixes.md
-.ai/coding-standards.md
-.ai/current-state.md
-.ai/decisions.md
-.ai/graph-memory.md
-.ai/memory-index.md
-.ai/project-brief.md
-.ai/prompts.md
-.ai/session-log.md
-.ai/shared-language.md
-.ai/task-board.md
-AGENTS.md
-README.md
-scripts/check-memory.py
-skills/README.md
-skills/memory-framework/architecture/SKILL.md
-skills/memory-framework/compress-memory/SKILL.md
-skills/memory-framework/continue/SKILL.md
-skills/memory-framework/debug/SKILL.md
-skills/memory-framework/feature/SKILL.md
-skills/memory-framework/graphify/SKILL.md
-skills/memory-framework/handoff/SKILL.md
-skills/memory-framework/new/SKILL.md
-skills/memory-framework/review/SKILL.md
-skills/memory-framework/setup-memory/SKILL.md
-skills/memory-framework/status/SKILL.md
-skills/memory-framework/sync-decisions/SKILL.md
-skills/memory-framework/update-memory/SKILL.md
+# Agent Memory Framework — File Tree
+
+## Root files
+- AGENTS.md
+- claude.md
+- .cursorrules
+- README.md
+- FILE_TREE.txt
+- .gitattributes
+
+## .ai/ — Memory files (17)
+- project-brief.md
+- current-state.md
+- decisions.md
+- task-board.md
+- architecture.md
+- coding-standards.md
+- bugs-and-fixes.md
+- agent-handoff.md
+- graph-memory.yaml       # STRUCTURED format (YAML)
+- shared-language.md
+- memory-index.md
+- test-results.md          # NEW
+- dependencies.md          # NEW
+- security.md              # NEW
+- api-contracts.md         # NEW
+- prompts.md
+- session-log.md
+
+## Recommended optional files
+- performance.md           # NEW
+- data-migrations.md       # NEW
+
+## .githooks/
+- pre-commit               # NEW — validation on commit
+
+## scripts/
+- agent-memory             # NEW — CLI tool (init, validate, compress)
+- check-memory.py          # Legacy validator
+
+## skills/
+- README.md
+- memory-framework/
+  - setup-memory/SKILL.md
+  - new/SKILL.md
+  - continue/SKILL.md
+  - handoff/SKILL.md
+  - update-memory/SKILL.md
+  - compress-memory/SKILL.md
+  - debug/SKILL.md
+  - feature/SKILL.md
+  - review/SKILL.md
+  - graphify/SKILL.md
+  - status/SKILL.md
+  - architecture/SKILL.md
+  - sync-decisions/SKILL.md

@@ -27,7 +27,7 @@ Review the completed work and update:
 3. `.ai/agent-handoff.md`
    - Write a concise handoff
    - Include changed files, commands, validation, known issues, and next task
-4. `.ai/graph-memory.md`
+4. `.ai/graph-memory.yaml`
    - Update feature/file/API/data/bug/decision relationships
 5. `.ai/bugs-and-fixes.md`
    - Add bugs found, fixes attempted, fixes completed, or regression risks

@@ -18,7 +18,7 @@ Add a feature as a small, safe vertical slice that fits the existing architectur
 4. `.ai/task-board.md`
 5. `.ai/architecture.md`
 6. `.ai/decisions.md`
-7. `.ai/graph-memory.md`
+7. `.ai/graph-memory.yaml`
 8. `.ai/coding-standards.md`
 
 ## Workflow
@@ -43,7 +43,7 @@ Add a feature as a small, safe vertical slice that fits the existing architectur
 
 - `.ai/current-state.md`
 - `.ai/task-board.md`
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/agent-handoff.md`
 - `.ai/decisions.md` if relevant
 - `.ai/bugs-and-fixes.md` if relevant

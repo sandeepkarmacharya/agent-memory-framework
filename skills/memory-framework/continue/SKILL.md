@@ -18,7 +18,7 @@ Resume from the repository memory instead of chat memory.
 4. `.ai/task-board.md`
 5. `.ai/decisions.md`
 6. `.ai/architecture.md`
-7. `.ai/graph-memory.md`
+7. `.ai/graph-memory.yaml`
 8. `.ai/bugs-and-fixes.md`
 
 ## Workflow
@@ -46,7 +46,7 @@ Resume from the repository memory instead of chat memory.
 - `.ai/current-state.md`
 - `.ai/task-board.md`
 - `.ai/agent-handoff.md`
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/bugs-and-fixes.md` if relevant
 - `.ai/decisions.md` if relevant
 

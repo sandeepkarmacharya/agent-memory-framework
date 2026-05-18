@@ -16,11 +16,11 @@ Create or refresh a useful relationship map for future agents.
 2. `.ai/current-state.md`
 3. `.ai/decisions.md`
 4. `.ai/bugs-and-fixes.md`
-5. Existing `.ai/graph-memory.md`
+5. Existing `.ai/graph-memory.yaml`
 
 ## Workflow
 
-Update `.ai/graph-memory.md` with these sections:
+Update `.ai/graph-memory.yaml` with these sections:
 
 1. Feature graph
 2. File graph
@@ -48,6 +48,6 @@ For each item, include only useful relationships:
 
 ## Required updates
 
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/agent-handoff.md`
 

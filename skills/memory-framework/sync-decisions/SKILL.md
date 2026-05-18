@@ -16,7 +16,7 @@ Make the decision log trustworthy again.
 2. `.ai/current-state.md`
 3. `.ai/architecture.md`
 4. `.ai/task-board.md`
-5. `.ai/graph-memory.md`
+5. `.ai/graph-memory.yaml`
 6. Relevant source files
 
 ## Workflow
@@ -38,6 +38,6 @@ Make the decision log trustworthy again.
 ## Required updates
 
 - `.ai/decisions.md`
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/agent-handoff.md`
 

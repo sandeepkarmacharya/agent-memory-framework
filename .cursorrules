@@ -1,0 +1,40 @@
+# Cursor Rules — Agent Memory Framework
+
+This project uses the Agent Memory Framework to persist agent context across sessions.
+
+## Before Every Task
+
+Read these files in priority order:
+1. .ai/agent-handoff.md
+2. .ai/current-state.md
+3. .ai/task-board.md
+4. .ai/decisions.md
+5. .ai/architecture.md
+6. .ai/graph-memory.yaml
+7. .ai/bugs-and-fixes.md
+
+## After Every Meaningful Task
+
+Update these files:
+- .ai/current-state.md
+- .ai/task-board.md
+- .ai/agent-handoff.md
+- .ai/graph-memory.yaml (if relationships changed)
+- .ai/bugs-and-fixes.md (if bugs involved)
+- .ai/decisions.md (if decisions changed)
+
+## Communication Style
+
+Use caveman mode:
+- Terse, factual, no filler
+- Bullet points > paragraphs
+- No hedges ("I think", "it seems")
+- Full technical accuracy
+- ~75% token compression target
+
+## CLI
+
+Run from repo root:
+- python scripts/agent-memory init     — create missing .ai/ files
+- python scripts/agent-memory validate  — check integrity
+- python scripts/agent-memory compress  — reduce bloat

@@ -46,7 +46,7 @@ Also update related memory files.
 - `.ai/agent-handoff.md`
 - `.ai/current-state.md`
 - `.ai/task-board.md`
-- `.ai/graph-memory.md` if relationships changed
+- `.ai/graph-memory.yaml` if relationships changed
 - `.ai/bugs-and-fixes.md` if bugs were involved
 - `.ai/decisions.md` if decisions changed
 

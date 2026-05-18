@@ -18,7 +18,7 @@ Find meaningful issues without rewriting the project.
 4. `.ai/coding-standards.md`
 5. `.ai/decisions.md`
 6. `.ai/current-state.md`
-7. `.ai/graph-memory.md`
+7. `.ai/graph-memory.yaml`
 
 ## Review checklist
 
@@ -50,5 +50,5 @@ Return:
 - `.ai/bugs-and-fixes.md` for confirmed bugs
 - `.ai/task-board.md` for recommended fixes
 - `.ai/agent-handoff.md` with review summary
-- `.ai/graph-memory.md` if relationships are discovered
+- `.ai/graph-memory.yaml` if relationships are discovered
 

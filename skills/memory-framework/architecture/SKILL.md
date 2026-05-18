@@ -16,7 +16,7 @@ Improve system design without creating a ball of mud.
 2. `.ai/project-brief.md`
 3. `.ai/architecture.md`
 4. `.ai/decisions.md`
-5. `.ai/graph-memory.md`
+5. `.ai/graph-memory.yaml`
 6. `.ai/coding-standards.md`
 7. `.ai/current-state.md`
 
@@ -41,7 +41,7 @@ Improve system design without creating a ball of mud.
 
 - `.ai/architecture.md`
 - `.ai/decisions.md` if decisions are made
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/current-state.md`
 - `.ai/agent-handoff.md`
 

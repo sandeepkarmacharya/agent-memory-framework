@@ -13,7 +13,7 @@ Before doing any work, read the relevant memory files in `.ai/`. At minimum, rea
 3. `.ai/task-board.md`
 4. `.ai/decisions.md`
 5. `.ai/architecture.md`
-6. `.ai/graph-memory.md`
+6. `.ai/graph-memory.yaml`
 7. `.ai/bugs-and-fixes.md`
 
 For brand-new setup, also read:
@@ -22,6 +22,28 @@ For brand-new setup, also read:
 2. `.ai/coding-standards.md`
 3. `.ai/shared-language.md`
 4. `.ai/memory-index.md`
+5. `.ai/test-results.md`
+6. `.ai/dependencies.md`
+7. `.ai/security.md`
+8. `.ai/api-contracts.md`
+
+## CLI tool
+
+A `scripts/agent-memory` CLI is available for common operations:
+
+- `python scripts/agent-memory init` — initialize or repair `.ai/` memory files
+- `python scripts/agent-memory validate` — check all files exist and have valid content
+- `python scripts/agent-memory compress` — compress bloated memory files
+
+## Pre-commit hook
+
+A pre-commit hook is installed at `.githooks/pre-commit`. Enable it:
+
+```
+git config core.hooksPath .githooks
+```
+
+The hook runs `agent-memory validate` before every commit and blocks if errors are found.
 
 ## Operating principles
 
@@ -53,12 +75,16 @@ Caveman does NOT apply to: user-facing docs the human controls, public README se
 
 After every meaningful task, update:
 
-- `.ai/current-state.md`
-- `.ai/task-board.md`
-- `.ai/agent-handoff.md`
-- `.ai/graph-memory.md` if relationships changed
-- `.ai/bugs-and-fixes.md` if bugs were found, fixed, or investigated
-- `.ai/decisions.md` if an important product or architecture decision was made
+- `.ai/current-state.md` — progress, blockers, next step
+- `.ai/task-board.md` — move tasks between Next/In Progress/Backlog/Done
+- `.ai/agent-handoff.md` — concise handoff for next agent
+- `.ai/graph-memory.yaml` — if feature/file/API/data/bug relationships changed
+- `.ai/bugs-and-fixes.md` — if bugs were found, fixed, or investigated
+- `.ai/decisions.md` — if an important product or architecture decision was made
+- `.ai/test-results.md` — if tests were run or changed
+- `.ai/dependencies.md` — if dependencies were added or removed
+- `.ai/security.md` — if auth, permissions, or threat model changed
+- `.ai/api-contracts.md` — if API surface changed
 
 ## Slash command mapping
 

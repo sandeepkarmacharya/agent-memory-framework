@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+
+"""Pre-commit hook: validate Agent Memory Framework files."""
+
+import subprocess
+import sys
+from pathlib import Path
+
+def main():
+    # Use the agent-memory CLI if available
+    script = Path(__file__).resolve().parent.parent / "scripts" / "agent-memory"
+    if script.exists():
+        result = subprocess.run(
+            [sys.executable, str(script), "validate"],
+            capture_output=True, text=True, timeout=30
+        )
+        print(result.stdout)
+        if "ERROR" in result.stdout:
+            print("\nCommit blocked: fix memory files before committing.")
+            print("Run: agent-memory init  (to create missing files)")
+            print("     agent-memory validate (to check again)")
+            sys.exit(1)
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
+    else:
+        # Fallback: basic check
+        root = Path.cwd()
+        required = [
+            "AGENTS.md",
+            ".ai/project-brief.md", ".ai/current-state.md",
+            ".ai/decisions.md", ".ai/task-board.md",
+        ]
+        errors = 0
+        for rel in required:
+            if not (root / rel).exists():
+                print(f"ERROR: Missing {rel}")
+                errors += 1
+        if errors:
+            sys.exit(1)
+
+if __name__ == "__main__":
+    main()

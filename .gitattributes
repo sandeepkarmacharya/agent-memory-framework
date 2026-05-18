@@ -1,2 +1,3 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+.ai/graph-memory.yaml linguist-language=YAML
+.githooks/pre-commit linguist-language=Python
+scripts/agent-memory linguist-language=Python

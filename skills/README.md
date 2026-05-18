@@ -1,6 +1,6 @@
 # Memory Framework Skills
 
-Each folder contains one reusable skill. In tools that support slash commands or skills, use the slash-style name. In tools that do not, paste the matching `SKILL.md` into the agent.
+Each folder contains one reusable skill for an AI agent. In tools that support slash commands or skills, use the slash-style name. In tools that do not, paste the matching `SKILL.md` content into the agent's instructions.
 
 ## Skills
 
@@ -19,6 +19,14 @@ Each folder contains one reusable skill. In tools that support slash commands or
 | `/status` | `status` | Getting a current state summary |
 | `/architecture` | `architecture` | Improving system design |
 | `/sync-decisions` | `sync-decisions` | Aligning decisions with current code |
+
+## CLI
+
+The `scripts/agent-memory` Python CLI provides three commands that complement these skills:
+
+- `python scripts/agent-memory init` — automated `.ai/` file creation (instead of `/setup-memory`)
+- `python scripts/agent-memory validate` — integrity check
+- `python scripts/agent-memory compress` — basic file compression (pre-step before `/compress-memory`)
 
 ## Rule
 

@@ -1,0 +1,40 @@
+# Graph Memory — Structured relationship map
+# Format: YAML for machine-readable parsing
+# Each section lists nodes and their edges
+
+features: {}
+#  auth_service:
+#    depends_on: [database, redis]
+#    used_by: [api_gateway]
+#    related_files: [src/auth/, src/middleware/]
+#    related_apis: [POST /auth/login]
+#    related_decisions: [use-jwt-auth]
+#    known_risks: [token-revocation-not-implemented]
+
+files: {}
+#  src/auth/login.py:
+#    purpose: Handles user login flow
+#    used_by: [web-ui, mobile-app]
+#    depends_on: [redis, database]
+#    related_bugs: [BUG-003]
+#    related_decisions: [use-jwt-auth]
+
+apis: {}
+#  POST /auth/login:
+#    purpose: Authenticate user, return JWT
+#    called_by: [web-ui, mobile-app]
+#    uses: [database.users, redis.sessions]
+#    auth_required: false
+
+data: {}
+#  users:
+#    purpose: User accounts and profiles
+#    written_by: [auth_service, admin_panel]
+#    read_by: [profile_service, analytics]
+
+bugs: {}
+#  BUG-003:
+#    caused_by: [src/auth/login.py]
+#    affects: [POST /auth/login]
+#    fixed_in: commit_abc123
+#    regression_risk: high

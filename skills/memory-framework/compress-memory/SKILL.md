@@ -10,6 +10,14 @@ description: Compress bloated project memory without losing important context. U
 
 Reduce memory bloat while preserving important context.
 
+## CLI
+
+The `scripts/agent-memory` CLI can auto-compress bloated files:
+
+```
+python scripts/agent-memory compress
+```
+
 ## Workflow
 
 1. Read every file in `.ai/`.

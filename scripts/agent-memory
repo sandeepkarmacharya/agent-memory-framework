@@ -1,0 +1,670 @@
+#!/usr/bin/env python3
+"""agent-memory — CLI for the Agent Memory Framework.
+
+Usage:
+    agent-memory init          Initialize .ai/ memory files in current repo
+    agent-memory validate      Check all .ai/ files exist and have valid content
+    agent-memory compress      Compress bloated memory files (auto-summarize)
+
+Install as:
+    chmod +x scripts/agent-memory
+    ln -s "$(pwd)/scripts/agent-memory" /usr/local/bin/agent-memory
+"""
+
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
+
+import argparse
+import os
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+
+# ── Constants ──────────────────────────────────────────────────────────────
+
+REQUIRED_FILES = [
+    "AGENTS.md",
+    ".ai/project-brief.md",
+    ".ai/current-state.md",
+    ".ai/decisions.md",
+    ".ai/task-board.md",
+    ".ai/architecture.md",
+    ".ai/coding-standards.md",
+    ".ai/bugs-and-fixes.md",
+    ".ai/agent-handoff.md",
+    ".ai/memory-index.md",
+    ".ai/shared-language.md",
+    ".ai/graph-memory.yaml",
+    ".ai/test-results.md",
+    ".ai/dependencies.md",
+    ".ai/security.md",
+    ".ai/api-contracts.md",
+]
+
+RECOMMENDED_FILES = [
+    ".ai/prompts.md",
+    ".ai/session-log.md",
+    ".ai/performance.md",
+    ".ai/data-migrations.md",
+]
+
+SKILL_DIRS = [
+    "setup-memory", "new", "continue", "handoff",
+    "update-memory", "compress-memory", "debug",
+    "feature", "review", "graphify", "status",
+    "architecture", "sync-decisions",
+]
+
+# ── Templates ──────────────────────────────────────────────────────────────
+
+TEMPLATES = {
+    "project-brief.md": """# Project Brief
+
+## Goal
+<!-- One-line summary of what this project does -->
+
+## Audience
+<!-- Who uses this project -->
+
+## Scope
+<!-- What's in scope, what's explicitly out of scope -->
+
+## Constraints
+<!-- Tech stack, time, budget, platform, regulatory -->
+
+## Success Criteria
+<!-- How we know the project is done -->
+""",
+    "current-state.md": """# Current State
+
+<!-- Update after every meaningful task -->
+
+## What's Built
+<!-- Features/modules that are implemented and working -->
+
+## What's In Progress
+<!-- Tasks currently being worked on -->
+
+## What's Broken
+<!-- Known issues with no fix yet -->
+
+## What's Next
+<!-- The single most important next task -->
+""",
+    "decisions.md": """# Decisions
+
+<!-- Format: [YYYY-MM-DD] Decision: <brief title>
+  - Context: <why this decision was needed>
+  - Chosen: <what was chosen>
+  - Rejected: <alternatives considered>
+  - Rationale: <why this path won>
+  - Revisit: <condition under which to re-evaluate>
+-->
+
+""",
+    "task-board.md": """# Task Board
+
+## Next
+<!-- Single task to work on right now -->
+
+## In Progress
+<!-- Task being worked on now -->
+
+## Backlog
+<!-- Tasks queued but not started -->
+
+## Done
+<!-- Completed tasks (most recent first) -->
+""",
+    "architecture.md": """# Architecture
+
+## Overview
+<!-- High-level architecture description (2-3 sentences) -->
+
+## Structure
+<!-- Directory/module layout, key files -->
+
+## Data Flow
+<!-- How data moves through the system -->
+
+## Key Interfaces
+<!-- APIs, events, message buses, shared state -->
+
+## Deployment
+<!-- How the system is deployed and run -->
+""",
+    "coding-standards.md": """# Coding Standards
+
+## General
+- Prefer simple code over clever code
+- Keep changes small and focused
+- Avoid unrelated refactors during feature work
+- Name things using the shared language
+- Caveman style in comments (terse, factual, no filler)
+
+## File & Module Rules
+- Keep files cohesive — one responsibility per file
+- Prefer deep modules with small external interfaces
+- Avoid circular dependencies
+
+## Testing
+- Add tests for important business logic
+- For bugs, create a regression check
+- If tests can't run, explain why and mark unverified
+
+## Error Handling
+- Handle expected errors explicitly
+- Don't swallow exceptions silently
+- Don't leak sensitive data in messages
+
+## Security
+- Never commit API keys, tokens, passwords, or private credentials
+- Validate inputs at trust boundaries
+- Keep auth checks close to protected operations
+""",
+    "bugs-and-fixes.md": """# Bugs & Fixes
+
+<!-- Add new entries at the top -->
+
+| Date | Bug | Symptom | Root Cause | Fix | Status | Regression Risk |
+|---|---|---|---|---|---|---|
+| | | | | | | |
+""",
+    "agent-handoff.md": """# Agent Handoff
+
+## Session
+- **Started:** <!-- datetime -->
+- **Ended:** <!-- datetime -->
+- **Agent:** <!-- model / tool used -->
+
+## Completed
+<!-- What was accomplished in this session -->
+
+## Files Changed
+<!-- Key files created or modified -->
+
+## Decisions Made
+<!-- Any decisions recorded -->
+
+## Bugs Found / Fixed
+<!-- Bug IDs or descriptions -->
+
+## Incomplete
+<!-- What remains unfinished -->
+
+## Next Task
+<!-- Single recommended next step -->
+
+## Commands Run
+<!-- Tests, builds, linters, migrations -->
+
+## Warnings
+<!-- Things the next agent should know -->
+""",
+    "graph-memory.yaml": """# Graph Memory — Structured relationship map
+# Format: YAML for machine-readable parsing
+# Each section lists nodes and their edges
+
+features: {}
+#  auth_service:
+#    depends_on: [database, redis]
+#    used_by: [api_gateway]
+#    related_files: [src/auth/, src/middleware/]
+#    related_apis: [POST /auth/login]
+#    related_decisions: [use-jwt-auth]
+#    known_risks: [token-revocation-not-implemented]
+
+files: {}
+#  src/auth/login.py:
+#    purpose: Handles user login flow
+#    used_by: [web-ui, mobile-app]
+#    depends_on: [redis, database]
+#    related_bugs: [BUG-003]
+#    related_decisions: [use-jwt-auth]
+
+apis: {}
+#  POST /auth/login:
+#    purpose: Authenticate user, return JWT
+#    called_by: [web-ui, mobile-app]
+#    uses: [database.users, redis.sessions]
+#    auth_required: false
+
+data: {}
+#  users:
+#    purpose: User accounts and profiles
+#    written_by: [auth_service, admin_panel]
+#    read_by: [profile_service, analytics]
+
+bugs: {}
+#  BUG-003:
+#    caused_by: [src/auth/login.py]
+#    affects: [POST /auth/login]
+#    fixed_in: commit_abc123
+#    regression_risk: high
+""",
+    "shared-language.md": """# Shared Language
+
+<!-- Domain terms and naming conventions used in this project -->
+
+| Term | Definition | Aliases | First Used |
+|---|---|---|---|
+| | | | |
+""",
+    "memory-index.md": """# Memory Index
+
+## Read Priority
+### Always Read First
+1. `AGENTS.md`
+2. `.ai/agent-handoff.md`
+3. `.ai/current-state.md`
+4. `.ai/task-board.md`
+5. `.ai/decisions.md`
+
+### Read When Relevant
+- `.ai/architecture.md` — before architecture/feature/API/DB work
+- `.ai/coding-standards.md` — before coding or review
+- `.ai/bugs-and-fixes.md` — before debugging or touching fragile areas
+- `.ai/graph-memory.yaml` — before tracing dependencies or switching agents
+- `.ai/shared-language.md` — before naming concepts
+- `.ai/test-results.md` — before running or interpreting tests
+- `.ai/dependencies.md` — before adding/changing dependencies
+- `.ai/security.md` — before auth/permissions work
+- `.ai/api-contracts.md` — before API changes
+- `.ai/prompts.md` — when slash skills unavailable
+- `.ai/session-log.md` — when chronological history needed
+
+## Update Rules
+| File | Update When |
+|---|---|
+| `project-brief.md` | Goals, audience, scope, or constraints change |
+| `current-state.md` | Any meaningful progress happens |
+| `decisions.md` | Product/architecture/API/security choices change |
+| `task-board.md` | Tasks added, started, blocked, or completed |
+| `architecture.md` | Structure, data flow, dependencies, or deployment changes |
+| `coding-standards.md` | Standards or conventions change |
+| `bugs-and-fixes.md` | Bugs found, investigated, fixed, or deferred |
+| `agent-handoff.md` | Before stopping or switching agents |
+| `graph-memory.yaml` | Relationships between features/files/APIs/data change |
+| `shared-language.md` | New domain terms emerge |
+| `test-results.md` | Tests pass, fail, or coverage changes |
+| `dependencies.md` | Dependency added, removed, or version changed |
+| `security.md` | Threat model, audit, or vulnerabilities discovered |
+| `api-contracts.md` | API schema or contract changes |
+
+## Hygiene
+- Keep current files current
+- Archive or compress stale details
+- Don't duplicate large sections across files
+- Don't store secrets
+""",
+    "test-results.md": """# Test Results
+
+## Summary
+| Suite | Pass | Fail | Skip | Coverage |
+|---|---|---|---|---|
+| | | | | |
+
+## Recent Runs
+<!-- Format: [YYYY-MM-DD] Suite -> result, coverage N%, notes -->
+""",
+    "dependencies.md": """# Dependencies
+
+## Runtime
+| Package | Version | Purpose | License | Notes |
+|---|---|---|---|---|
+| | | | | |
+
+## Dev
+| Package | Version | Purpose | License | Notes |
+|---|---|---|---|---|
+| | | | | |
+
+## System
+| Tool/Service | Version | Purpose | Notes |
+|---|---|---|---|
+| | | | |
+""",
+    "security.md": """# Security
+
+## Threat Model
+<!-- Assets, threats, mitigations -->
+
+## Recent Audits
+<!-- [YYYY-MM-DD] What was reviewed, findings -->
+
+## Known Vulnerabilities
+<!-- Open issues, CVE references -->
+
+## Credential Hygiene
+- No keys/tokens committed to repo
+- Secrets in environment variables or secret manager
+- `.env` files in `.gitignore`
+""",
+    "api-contracts.md": """# API Contracts
+
+## Endpoints
+| Method | Path | Purpose | Auth | Status |
+|---|---|---|---|---|
+| | | | | |
+
+## Schemas
+<!-- Key request/response schemas. Link to OpenAPI spec if available -->
+""",
+    "performance.md": """# Performance
+
+## Benchmarks
+| Scenario | Metric | Baseline | Current | Trend |
+|---|---|---|---|---|
+| | | | | |
+
+## Profiles
+<!-- [YYYY-MM-DD] Profiling output or flamegraph summary -->
+""",
+    "data-migrations.md": """# Data Migrations
+
+| Migration | Date | Status | Risk | Rollback |
+|---|---|---|---|---|
+| | | | | |
+""",
+}
+
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+def _root() -> Path:
+    """Find repo root (where AGENTS.md lives)."""
+    cwd = Path.cwd()
+    for parent in [cwd] + list(cwd.parents):
+        if (parent / "AGENTS.md").exists():
+            return parent
+    print("Error: No AGENTS.md found. Are you in the repo root?", file=sys.stderr)
+    sys.exit(1)
+
+
+def _info(msg: str):
+    print(f"  ✓ {msg}")
+
+
+def _warn(msg: str):
+    print(f"  ⚠ {msg}")
+
+
+def _err(msg: str):
+    print(f"  ✗ {msg}")
+
+
+# ── Subcommands ────────────────────────────────────────────────────────────
+
+def cmd_init(args):
+    """Initialize .ai/ memory files and git hook."""
+    root = _root()
+    ai_dir = root / ".ai"
+    ai_dir.mkdir(parents=True, exist_ok=True)
+
+    created = 0
+    skipped = 0
+
+    for fname, content in TEMPLATES.items():
+        path = ai_dir / fname
+        if path.exists():
+            _warn(f"{fname} already exists")
+            skipped += 1
+        else:
+            path.write_text(content.strip() + "\n", encoding="utf-8")
+            _info(f"Created .ai/{fname}")
+            created += 1
+
+    # Init graph-memory.yaml as structured format (replace .md if exists)
+    md_graph = ai_dir / "graph-memory.md"
+    yaml_graph = ai_dir / "graph-memory.yaml"
+    if md_graph.exists() and not yaml_graph.exists():
+        # Migrate: import old graph-memory.md content
+        old_content = md_graph.read_text(encoding="utf-8")
+        yaml_graph.write_text(TEMPLATES["graph-memory.yaml"].strip() + "\n", encoding="utf-8")
+        _info("Created .ai/graph-memory.yaml (migrated from .md format)")
+        # Keep old .md as reference but note it's deprecated
+        md_graph.rename(ai_dir / "graph-memory.md.deprecated")
+
+    # Install git pre-commit hook
+    hooks_dir = root / ".githooks"
+    hooks_dir.mkdir(parents=True, exist_ok=True)
+    hook_path = hooks_dir / "pre-commit"
+    if not hook_path.exists():
+        hook_content = _precommit_hook_script()
+        hook_path.write_text(hook_content.strip() + "\n", encoding="utf-8")
+        hook_path.chmod(0o755)
+        _info("Created .githooks/pre-commit — run 'git config core.hooksPath .githooks' to enable")
+    else:
+        _warn(".githooks/pre-commit already exists")
+
+    print(f"\nDone: {created} files created, {skipped} already existed")
+    print("Run 'git config core.hooksPath .githooks' to enable pre-commit validation.")
+
+
+def cmd_validate(args):
+    """Validate all required .ai/ files exist and have content."""
+    root = _root()
+    errors = 0
+    warnings = 0
+
+    # Check AGENTS.md
+    agents = root / "AGENTS.md"
+    if not agents.exists():
+        _err("Missing required: AGENTS.md")
+        errors += 1
+    elif not agents.read_text(encoding="utf-8").strip():
+        _err("Empty file: AGENTS.md")
+        errors += 1
+    else:
+        _info("AGENTS.md present")
+
+    # Check required .ai/ files
+    for rel in REQUIRED_FILES:
+        path = root / rel
+        if not path.exists():
+            _err(f"Missing required: {rel}")
+            errors += 1
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace").strip()
+        if not text:
+            _err(f"Empty file: {rel}")
+            errors += 1
+        elif text == TEMPLATES.get(rel.split("/")[-1], "").strip():
+            _warn(f"Unchanged template: {rel} — fill in project-specific details")
+            warnings += 1
+        else:
+            _info(f"{rel} — {len(text)} bytes, non-empty")
+
+    # Check recommended .ai/ files
+    for rel in RECOMMENDED_FILES:
+        path = root / rel
+        if not path.exists():
+            _warn(f"Recommended but missing: {rel}")
+            warnings += 1
+
+    # Check skill files
+    skill_base = root / "skills" / "memory-framework"
+    for skill in SKILL_DIRS:
+        sp = skill_base / skill / "SKILL.md"
+        if not sp.exists():
+            _warn(f"Missing skill: {skill}/SKILL.md")
+            warnings += 1
+
+    # Check .githooks
+    hook_path = root / ".githooks" / "pre-commit"
+    hook_enabled = False
+    if hook_path.exists() and os.access(str(hook_path), os.X_OK):
+        _info(".githooks/pre-commit hook present and executable")
+        # Check if hooksPath is configured
+        import subprocess
+        result = subprocess.run(
+            ["git", "config", "core.hooksPath"],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0 and result.stdout.strip() == ".githooks":
+            hook_enabled = True
+            _info("Pre-commit hook enabled (core.hooksPath = .githooks)")
+        else:
+            _warn("Pre-commit hook installed but not enabled. Run: git config core.hooksPath .githooks")
+    else:
+        _warn("No pre-commit hook at .githooks/pre-commit — consider creating one")
+
+    # Summary
+    print(f"\n{'─' * 40}")
+    if errors:
+        print(f"RESULT: {errors} ERRORS, {warnings} warnings — fix errors before committing")
+    elif warnings:
+        print(f"RESULT: PASSED with {warnings} warnings")
+    else:
+        print("RESULT: ALL CHECKS PASSED")
+
+    return errors
+
+
+def cmd_compress(args):
+    """Compress memory files: deduplicate, truncate old entries, keep current state."""
+    root = _root()
+
+    files_to_compress = [
+        ".ai/agent-handoff.md", ".ai/current-state.md",
+        ".ai/bugs-and-fixes.md", ".ai/session-log.md", ".ai/task-board.md",
+    ]
+
+    for rel in files_to_compress:
+        path = root / rel
+        if not path.exists():
+            _warn(f"Skipping {rel} — not found")
+            continue
+
+        text = path.read_text(encoding="utf-8")
+        original_len = len(text)
+        lines = text.splitlines()
+
+        # Skip empty files
+        if original_len < 50:
+            _info(f"{rel} — already small ({original_len} bytes), skipping")
+            continue
+
+        # Compression heuristics:
+        new_lines = []
+        dedup_set = set()
+        empty_line_run = 0
+        kept = 0
+        removed = 0
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Collapse repeated empty lines
+            if not stripped:
+                empty_line_run += 1
+                if empty_line_run <= 1:
+                    new_lines.append(line)
+                else:
+                    removed += 1
+                continue
+            empty_line_run = 0
+
+            # Deduplicate exact repeated lines
+            if stripped in dedup_set and len(stripped) > 20:
+                removed += 1
+                continue
+            dedup_set.add(stripped)
+
+            new_lines.append(line)
+            kept += 1
+
+        new_text = "\n".join(new_lines)
+        new_len = len(new_text)
+
+        saved = original_len - new_len
+        if saved > 0:
+            path.write_text(new_text + "\n", encoding="utf-8")
+            _info(f"{rel} — compressed: {original_len} → {new_len} bytes ({saved} saved, {removed} lines removed)")
+        else:
+            _info(f"{rel} — already clean ({original_len} bytes)")
+
+    print("\nCompression complete.")
+
+
+# ── Pre-commit hook content ────────────────────────────────────────────────
+
+def _precommit_hook_script() -> str:
+    return """#!/usr/bin/env python3
+""" + '''
+"""Pre-commit hook: validate Agent Memory Framework files."""
+
+import subprocess
+import sys
+from pathlib import Path
+
+def main():
+    # Use the agent-memory CLI if available
+    script = Path(__file__).resolve().parent.parent / "scripts" / "agent-memory"
+    if script.exists():
+        result = subprocess.run(
+            [sys.executable, str(script), "validate"],
+            capture_output=True, text=True, timeout=30
+        )
+        print(result.stdout)
+        if "ERROR" in result.stdout:
+            print("\\nCommit blocked: fix memory files before committing.")
+            print("Run: agent-memory init  (to create missing files)")
+            print("     agent-memory validate (to check again)")
+            sys.exit(1)
+        if result.stderr:
+            print(result.stderr, file=sys.stderr)
+    else:
+        # Fallback: basic check
+        root = Path.cwd()
+        required = [
+            "AGENTS.md",
+            ".ai/project-brief.md", ".ai/current-state.md",
+            ".ai/decisions.md", ".ai/task-board.md",
+        ]
+        errors = 0
+        for rel in required:
+            if not (root / rel).exists():
+                print(f"ERROR: Missing {rel}")
+                errors += 1
+        if errors:
+            sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+# ── Main ───────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Agent Memory Framework CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  agent-memory init        Initialize .ai/ files in current repo
+  agent-memory validate    Check memory file integrity
+  agent-memory compress    Reduce bloat in memory files
+        """,
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    init_p = sub.add_parser("init", help="Initialize .ai/ memory files")
+    init_p.set_defaults(func=cmd_init)
+
+    val_p = sub.add_parser("validate", help="Validate memory file integrity")
+    val_p.set_defaults(func=cmd_validate)
+
+    comp_p = sub.add_parser("compress", help="Compress bloated memory files")
+    comp_p.set_defaults(func=cmd_compress)
+
+    args = parser.parse_args()
+    errors = args.func(args)
+    if hasattr(errors, "__int__") and errors:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

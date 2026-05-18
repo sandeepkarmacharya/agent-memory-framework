@@ -43,6 +43,6 @@ Start a new project without creating messy context debt.
 - `.ai/task-board.md`
 - `.ai/architecture.md`
 - `.ai/decisions.md` if decisions were made
-- `.ai/graph-memory.md`
+- `.ai/graph-memory.yaml`
 - `.ai/agent-handoff.md`
 
