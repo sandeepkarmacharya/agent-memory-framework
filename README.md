@@ -23,11 +23,26 @@ AI agents forget everything when the session ends. Switching agents means starti
 
 ### 1. Install the framework in your repo
 
-```bash
-# From a local clone of this framework repo:
-python scripts/agent-memory install --target /path/to/your/project
+#### One-line setup
 
-# Or install into the current directory:
+Run this from the root of any app/project repo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sandeepkarmacharya/agent-memory-framework/main/install.sh | bash
+```
+
+Installs into the current project by default. The bootstrapper clones the framework to a temporary directory, runs `install` for new projects, and automatically runs `upgrade` when `.ai/` or `scripts/agent-memory` already exists.
+
+Optional target directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sandeepkarmacharya/agent-memory-framework/main/install.sh | AGENT_MEMORY_TARGET=/path/to/your/project bash
+```
+
+Manual install from a local clone still works:
+
+```bash
+python scripts/agent-memory install --target /path/to/your/project
 python scripts/agent-memory install --target .
 ```
 
