@@ -8,9 +8,12 @@ AI agents forget everything when the session ends. Switching agents means starti
 
 - **13 memory file types** — state, decisions, tasks, architecture, bugs, deps, test results, security, API contracts, shared language, more
 - **Structured YAML graph memory** — machine-readable relationship maps between features, files, APIs, data, bugs
-- **CLI tool** — `agent-memory init`, `validate`, `compress` from the terminal
+- **BM25 retrieval layer** — ranked full-text search across memory files; agents query specific context instead of reading everything (saves ~50-80% token overhead)
+- **Repo importer** — bootstrap `.ai/` from any existing project by scanning source code, dependencies, and structure
+- **CLI tool** — `init`, `validate`, `compress`, `index`, `query`, `search`, `import`, `suggest`
 - **13 slash-command skills** — `/new`, `/continue`, `/handoff`, `/debug`, `/feature`, `/review`, etc.
-- **Pre-commit hook** — automatic memory validation before every `git commit`
+- **Pre-commit hook** — automatic memory validation + index rebuild before every `git commit`
+- **Git-aware suggestions** — `suggest` command analyzes recent changes and proposes memory updates
 - **Caveman mode** — terse communication saves ~75% token usage
 - **IDE integration** — `claude.md` and `.cursorrules` included for zero-config agent onboarding
 - **Agent-agnostic** — works with Claude Code, Cursor, Continue, opencode, Hermes Agent, and any tool that reads repo files
@@ -99,6 +102,11 @@ The old `graph-memory.md` was plain text — agents parsed it inconsistently and
 python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
 python scripts/agent-memory validate    # Check all files exist and have content
 python scripts/agent-memory compress    # Deduplicate and compress bloated files
+python scripts/agent-memory index       # Build BM25 search index for retrieval
+python scripts/agent-memory query "..." # Ranked full-text search across memory
+python scripts/agent-memory search ...  # Find which files contain a term
+python scripts/agent-memory import ...  # Bootstrap .ai/ from existing project
+python scripts/agent-memory suggest     # Propose memory updates from git diff
 ```
 
 ### `init`
@@ -125,6 +133,73 @@ Reduces bloat in memory files without losing important context:
 - Skips files that are already compact (under 50 bytes)
 
 For deeper compression, use the `/compress-memory` skill which intelligently preserves decisions, active tasks, and unresolved bugs.
+
+### `index`
+
+Builds a BM25 search index over all `.ai/` files for fast retrieval:
+
+```
+python scripts/agent-memory index
+```
+
+The index is cached at `.ai/.memory_index/index.json` and auto-rebuilds on:
+- `git commit` (via pre-commit hook)
+- First `query` call after files change
+
+Zero external dependencies — BM25 is implemented in pure Python.
+
+### `query`
+
+**Ranked full-text search** across all indexed memory files. This is the retrieval layer:
+
+```
+python scripts/agent-memory query "database schema config"
+python scripts/agent-memory query "error handling auth middleware" -k 3
+```
+
+Returns ranked results with relevance scores and context snippets. Use this to:
+- Find relevant context without reading every `.ai/` file
+- Quickly onboard onto a project: `query "architecture goals decisions"`
+- Debug: `query "bug error caching timeout"` → finds bugs-and-fixes.md matches
+
+### `search`
+
+Grep-like search that returns files containing a term, sorted by match count:
+
+```
+python scripts/agent-memory search "migration"
+```
+
+Useful for finding which specific files to read on a topic.
+
+### `import`
+
+Bootstrap `.ai/` memory files from an existing project that doesn't use the framework yet:
+
+```
+python scripts/agent-memory import ../other-project
+```
+
+Auto-detects:
+- Languages and frameworks (Python, JS/TS, Go, Rust, etc.)
+- Build/CI tools (Docker, GitHub Actions, Make, etc.)
+- Dependencies (from requirements.txt, package.json, etc.)
+- Project structure (directory tree up to 3 levels deep)
+- Test files and configurations
+
+Generates: `project-brief.md`, `current-state.md`, `architecture.md`, `dependencies.md`, `task-board.md`
+
+After import, run `agent-memory init` and `agent-memory validate` to complete setup with remaining memory files.
+
+### `suggest`
+
+Analyzes recent git changes and proposes memory updates:
+
+```
+python scripts/agent-memory suggest
+```
+
+If you modified source files, it suggests updating `current-state.md`, `task-board.md`, and `agent-handoff.md`. If you modified config files, it flags `dependencies.md` for review. If it detects potential credential exposure in changed files, it issues a **CRITICAL** alert for `security.md`.
 
 ## Slash Commands
 

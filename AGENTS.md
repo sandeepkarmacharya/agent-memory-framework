@@ -31,9 +31,39 @@ For brand-new setup, also read:
 
 A `scripts/agent-memory` CLI is available for common operations:
 
-- `python scripts/agent-memory init` — initialize or repair `.ai/` memory files
-- `python scripts/agent-memory validate` — check all files exist and have valid content
-- `python scripts/agent-memory compress` — compress bloated memory files
+| Command | Action |
+|---|---|
+| `python scripts/agent-memory init` | Initialize or repair `.ai/` memory files |
+| `python scripts/agent-memory validate` | Check all files exist and have valid content |
+| `python scripts/agent-memory compress` | Compress bloated memory files |
+| `python scripts/agent-memory index` | Build BM25 search index for retrieval |
+| `python scripts/agent-memory query "<terms>"` | **Ranked full-text search** across all memory |
+| `python scripts/agent-memory search <term>` | Find which files contain a term |
+| `python scripts/agent-memory import <path>` | Bootstrap `.ai/` from an existing project |
+| `python scripts/agent-memory suggest` | Suggest memory updates from recent git changes |
+
+## Retrieval layer (BM25)
+
+Instead of reading all `.ai/` files (expensive), use **semantic search**:
+
+1. Build the index: `python scripts/agent-memory index`
+2. Query specific topics: `python scripts/agent-memory query "database schema config"`
+3. Only read the top matching files in full.
+
+This cuts token cost by only loading relevant context. Use for:
+- **Quick context:** "What is the database schema?" → query → read 1-2 files
+- **Debugging:** "error handling auth middleware" → query → find relevant files
+- **Onboarding:** "project architecture goals" → query → summarize
+
+## Import from existing project
+
+To bootstrap `.ai/` memory for a codebase that doesn't use this framework yet:
+
+```bash
+python scripts/agent-memory import ../other-project
+```
+
+This scans the target repo, detects languages, frameworks, dependencies, test files, and project structure, then generates starter memory files. Review and fill in the TBDs.
 
 ## Pre-commit hook
 

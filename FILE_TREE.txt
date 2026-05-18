@@ -8,7 +8,7 @@
 - FILE_TREE.txt
 - .gitattributes
 
-## .ai/ — Memory files (17)
+## .ai/ — Memory files (19)
 - project-brief.md
 - current-state.md
 - decisions.md
@@ -17,26 +17,28 @@
 - coding-standards.md
 - bugs-and-fixes.md
 - agent-handoff.md
-- graph-memory.yaml       # STRUCTURED format (YAML)
+- graph-memory.yaml              # STRUCTURED YAML format
 - shared-language.md
 - memory-index.md
-- test-results.md          # NEW
-- dependencies.md          # NEW
-- security.md              # NEW
-- api-contracts.md         # NEW
+- test-results.md
+- dependencies.md
+- security.md
+- api-contracts.md
 - prompts.md
 - session-log.md
-
-## Recommended optional files
-- performance.md           # NEW
-- data-migrations.md       # NEW
+- performance.md                 # Optional
+- data-migrations.md             # Optional
+- graph-memory.md.deprecated     # Old format, kept for reference
 
 ## .githooks/
-- pre-commit               # NEW — validation on commit
+- pre-commit                     # Validate + auto-index on commit
 
 ## scripts/
-- agent-memory             # NEW — CLI tool (init, validate, compress)
-- check-memory.py          # Legacy validator
+- agent-memory                   # CLI tool (init, validate, compress, index, query, search, import, suggest)
+- memory_query/                  # BM25 retrieval engine
+  - __init__.py
+  - indexer.py                   # MemoryIndex class + format_results
+  - importer.py                  # import_repo() + CLI handler
 
 ## skills/
 - README.md

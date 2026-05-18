@@ -22,6 +22,14 @@ def main():
             sys.exit(1)
         if result.stderr:
             print(result.stderr, file=sys.stderr)
+
+        # Rebuild search index on every commit
+        index_result = subprocess.run(
+            [sys.executable, str(script), "index"],
+            capture_output=True, text=True, timeout=30
+        )
+        if index_result.stdout.strip():
+            print(index_result.stdout.strip())
     else:
         # Fallback: basic check
         root = Path.cwd()

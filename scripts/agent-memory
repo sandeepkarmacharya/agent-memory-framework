@@ -17,8 +17,10 @@ Install as:
 # ///
 
 import argparse
+import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -617,7 +619,7 @@ def main():
         if result.stderr:
             print(result.stderr, file=sys.stderr)
     else:
-        # Fallback: basic check
+        # Fallback: basic check — [rest unchanged]
         root = Path.cwd()
         required = [
             "AGENTS.md",
@@ -637,6 +639,125 @@ if __name__ == "__main__":
 '''
 
 
+# ── Retrieval Commands ─────────────────────────────────────────────────────
+
+def cmd_index(args):
+    """Build the BM25 search index for .ai/ memory files."""
+    try:
+        from memory_query import MemoryIndex
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from memory_query import MemoryIndex
+
+    root = _root()
+    ai_dir = root / ".ai"
+    idx = MemoryIndex(str(ai_dir))
+    idx.build(force=True)
+    print(f"Indexed {idx.num_docs} documents ({len(idx.idf)} unique terms)")
+    print(f"Cache: {ai_dir / '.memory_index' / 'index.json'}")
+
+
+def cmd_query(args):
+    """BM25 search query against .ai/ memory files."""
+    try:
+        from memory_query import MemoryIndex, format_results
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from memory_query import MemoryIndex, format_results
+
+    root = _root()
+    ai_dir = root / ".ai"
+    idx = MemoryIndex(str(ai_dir))
+    idx.build()
+    results = idx.query(args.terms, top_k=args.top_k)
+    print(format_results(results, mode="query"))
+
+
+def cmd_search(args):
+    """Search for files containing specific terms (grep-like)."""
+    try:
+        from memory_query import MemoryIndex, format_results
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from memory_query import MemoryIndex, format_results
+
+    root = _root()
+    ai_dir = root / ".ai"
+    idx = MemoryIndex(str(ai_dir))
+    idx.build()
+    results = idx.search(args.term)
+    print(format_results(results, mode="search"))
+
+
+def cmd_import_(args):
+    """Bootstrap .ai/ files from an existing project."""
+    try:
+        from memory_query.importer import import_cli
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from memory_query.importer import import_cli
+
+    return import_cli(args)
+
+
+# ── Suggest ────────────────────────────────────────────────────────────────
+
+def cmd_suggest(args):
+    """Suggest memory updates based on recent git changes."""
+    root = _root()
+
+    # Get files changed in the last commit
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=root
+    )
+    if result.returncode != 0:
+        # Try just unstaged changes
+        result = subprocess.run(
+            ["git", "diff", "--name-only"],
+            capture_output=True, text=True, timeout=30, cwd=root
+        )
+
+    changed = [f.strip() for f in result.stdout.splitlines() if f.strip()]
+    if not changed:
+        print("No recent changes detected.")
+        return
+
+    # Analyze what changed
+    ai_updated = any(f.startswith(".ai/") for f in changed)
+    source_changed = [f for f in changed if not f.startswith(".ai/") and f.endswith((".py", ".js", ".ts", ".go", ".rs", ".rb", ".java", ".yaml", ".yml"))]
+
+    suggestions = []
+    if source_changed:
+        suggestions.append("Update .ai/current-state.md (source files changed)")
+        suggestions.append("Update .ai/task-board.md (work was done)")
+        suggestions.append("Update .ai/agent-handoff.md (session summary)")
+        suggestions.append("Update .ai/graph-memory.yaml (relationships may have changed)")
+
+    if any("test" in f.lower() for f in changed):
+        suggestions.append("Update .ai/test-results.md (tests changed)")
+
+    if any(f.endswith((".yaml", ".yml", ".json", ".toml")) for f in changed):
+        suggestions.append("Update .ai/dependencies.md (config/deps changed)")
+
+    if any(".env" in f or "credential" in f.lower() or "secret" in f.lower() for f in changed):
+        suggestions.append("CRITICAL: Check .ai/security.md (secrets/credentials may have been exposed)")
+
+    if not ai_updated:
+        suggestions.append("(.ai/ files were NOT updated — memory may be stale)")
+
+    print(f"Detected {len(changed)} changed files:\n")
+    for f in changed[:15]:
+        print(f"  {f}")
+    if len(changed) > 15:
+        print(f"  ... and {len(changed)-15} more")
+    print(f"\nSuggested memory updates:\n")
+    for s in suggestions:
+        icon = "!" if s.startswith("CRITICAL") else "•"
+        print(f"  {icon} {s}")
+
+
+
 # ── Main ───────────────────────────────────────────────────────────────────
 
 def main():
@@ -644,9 +765,14 @@ def main():
         description="Agent Memory Framework CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
-  agent-memory init        Initialize .ai/ files in current repo
-  agent-memory validate    Check memory file integrity
-  agent-memory compress    Reduce bloat in memory files
+  agent-memory init            Initialize .ai/ files in current repo
+  agent-memory validate        Check memory file integrity
+  agent-memory compress        Reduce bloat in memory files
+  agent-memory index           Build BM25 search index
+  agent-memory query "terms"   BM25 search (ranked results)
+  agent-memory search <term>   Find files containing term
+  agent-memory import <path>   Bootstrap .ai/ from existing project
+  agent-memory suggest         Suggest memory updates from git changes
         """,
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -659,6 +785,25 @@ def main():
 
     comp_p = sub.add_parser("compress", help="Compress bloated memory files")
     comp_p.set_defaults(func=cmd_compress)
+
+    idx_p = sub.add_parser("index", help="Build BM25 search index for .ai/ files")
+    idx_p.set_defaults(func=cmd_index)
+
+    q_p = sub.add_parser("query", help="BM25 search query against indexed memory")
+    q_p.add_argument("terms", help="Search terms (e.g. 'database schema auth')")
+    q_p.add_argument("-k", "--top-k", type=int, default=5, help="Number of results (default: 5)")
+    q_p.set_defaults(func=cmd_query)
+
+    s_p = sub.add_parser("search", help="Find .ai/ files containing a specific term")
+    s_p.add_argument("term", help="Term to search for")
+    s_p.set_defaults(func=cmd_search)
+
+    imp_p = sub.add_parser("import", help="Bootstrap .ai/ files from existing project")
+    imp_p.add_argument("path", nargs="?", default=".", help="Path to project (default: current dir)")
+    imp_p.set_defaults(func=cmd_import_)
+
+    sug_p = sub.add_parser("suggest", help="Suggest memory updates from recent git changes")
+    sug_p.set_defaults(func=cmd_suggest)
 
     args = parser.parse_args()
     errors = args.func(args)
