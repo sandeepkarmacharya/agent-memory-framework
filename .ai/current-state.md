@@ -2,39 +2,42 @@
 
 ## Current development stage
 
-Not started / planning / building / testing / shipping: TBD
+Building.
 
 ## What is built
 
-- TBD
+- CLI: `init`, `validate`, `compress`, `index`, `query`, `search`, `import`, `suggest`.
+- New CLI: `context "<task>"` builds compact task-specific context pack.
+- Context pack always includes handoff/current-state/task-board, then BM25-ranked relevant memory.
+- Context pack supports `--top-k` and `--budget` with truncation marker.
 
 ## What is partially built
 
-- TBD
+- Automatic memory runtime: context step done; finish/install/doctor pending.
 
 ## What is broken
 
-- TBD
+- None known.
 
 ## Current blockers
 
-- TBD
+- None.
 
 ## Current focus
 
-- TBD
+- Make framework automatic, low-command, token-saving for coding agents.
 
 ## Next recommended task
 
-- TBD
+- Add `finish --summary` command to update handoff/current-state/task-board from git diff and rebuild index.
 
 ## Validation status
 
-- Tests run: TBD
-- Manual checks: TBD
-- Known unverified areas: TBD
+- Tests run: `python -m pytest -q` -> 2 passed.
+- Manual checks: `agent-memory context`, `validate`, `index` passed.
+- Known unverified areas: no CI yet; no install packaging yet.
 
 ## Last updated
 
-- Date: TBD
-- Agent/tool: TBD
+- Date: 2026-05-18
+- Agent/tool: Hermes / GPT-5.5 Codex

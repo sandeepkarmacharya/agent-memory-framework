@@ -4,61 +4,78 @@ This is the primary file for switching agents. Keep it concise and current.
 
 ## Latest session summary
 
-TBD
+Added first automation step: `agent-memory context "<task>"`.
 
 ## What was completed
 
-- TBD
+- Added compact context pack CLI command.
+- Added budget-aware truncation.
+- Added always-included continuity files.
+- Added BM25-ranked relevant memory section.
+- Added tests.
+- Updated README, AGENTS command table, skills README.
 
 ## Files changed
 
-- TBD
+- `scripts/agent-memory`
+- `tests/test_context_command.py`
+- `README.md`
+- `AGENTS.md`
+- `skills/README.md`
+- `.ai/current-state.md`
+- `.ai/task-board.md`
+- `.ai/agent-handoff.md`
+- `.ai/test-results.md`
+- `.ai/decisions.md`
 
 ## Decisions made
 
-- TBD
+- Use `context` as first runtime abstraction above raw `query`/manual slash commands.
 
 ## Bugs found or fixed
 
-- TBD
+- None.
 
 ## Current task status
 
-- TBD
+- Step 1 complete.
 
 ## Next recommended task
 
-- TBD
+- Add `finish --summary` command to update memory from task summary/git diff and rebuild index.
 
 ## Commands run
 
 ```bash
-# TBD
+python -m pytest tests/test_context_command.py -q
+python -m pytest -q
+python scripts/agent-memory context "fix auth redirect bug" --top-k 2 --budget 1200
+python scripts/agent-memory validate
+python scripts/agent-memory index
 ```
 
 ## Validation status
 
-- Tests run: TBD
-- Manual checks: TBD
-- Not verified: TBD
+- Tests run: 2 passed.
+- Manual checks: context output, validate, index passed.
+- Not verified: packaging/CI absent.
 
 ## Warnings for next agent
 
-- TBD
+- `validate` still warns about unchanged template files: graph-memory, test-results, dependencies, security, api-contracts.
+- AGENTS first-rule still asks agents to read many files; next step should switch that to context-first.
 
 ## Do not redo
 
-- TBD
+- Do not re-add context command; extend it only if needed.
 
 ## Suggested next prompt
 
 ```txt
-/continue
-
-Read AGENTS.md and the .ai memory files. Continue from the current handoff. Do not start from scratch.
+Continue one step: implement agent-memory finish --summary with tests first.
 ```
 
 ## Last updated
 
-- Date: TBD
-- Agent/tool: TBD
+- Date: 2026-05-18
+- Agent/tool: Hermes / GPT-5.5 Codex

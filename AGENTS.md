@@ -36,6 +36,7 @@ A `scripts/agent-memory` CLI is available for common operations:
 | `python scripts/agent-memory init` | Initialize or repair `.ai/` memory files |
 | `python scripts/agent-memory validate` | Check all files exist and have valid content |
 | `python scripts/agent-memory compress` | Compress bloated memory files |
+| `python scripts/agent-memory context "<task>"` | Build compact task-specific context pack |
 | `python scripts/agent-memory index` | Build BM25 search index for retrieval |
 | `python scripts/agent-memory query "<terms>"` | **Ranked full-text search** across all memory |
 | `python scripts/agent-memory search <term>` | Find which files contain a term |

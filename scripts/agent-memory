@@ -5,6 +5,7 @@ Usage:
     agent-memory init          Initialize .ai/ memory files in current repo
     agent-memory validate      Check all .ai/ files exist and have valid content
     agent-memory compress      Compress bloated memory files (auto-summarize)
+    agent-memory context       Build compact context pack for a task
 
 Install as:
     chmod +x scripts/agent-memory
@@ -757,6 +758,104 @@ def cmd_suggest(args):
         print(f"  {icon} {s}")
 
 
+# ── Context Pack ───────────────────────────────────────────────────────────
+
+_ALWAYS_CONTEXT_FILES = [
+    ".ai/agent-handoff.md",
+    ".ai/current-state.md",
+    ".ai/task-board.md",
+]
+
+
+def _read_rel(root: Path, rel: str) -> str:
+    path = root / rel
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8", errors="replace").strip()
+
+
+def _truncate_for_budget(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+    keep = max(120, max_chars - 40)
+    return text[:keep].rstrip() + "\n[truncated]"
+
+
+def _render_context_file(root: Path, rel: str, max_chars: int) -> str:
+    text = _read_rel(root, rel)
+    if not text:
+        return f"### {rel}\nMissing or empty."
+    return f"### {rel}\n{_truncate_for_budget(text, max_chars)}"
+
+
+def cmd_context(args):
+    """Build a compact context pack for a task without reading all memory files."""
+    try:
+        from memory_query import MemoryIndex
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from memory_query import MemoryIndex
+
+    root = _root()
+    ai_dir = root / ".ai"
+    idx = MemoryIndex(str(ai_dir))
+    idx.build()
+
+    budget = max(args.budget, 200)
+    # Approximate four characters per token. Split budget across always-read files
+    # and relevant snippets so the pack stays bounded without external tokenizers.
+    total_chars = budget * 4
+    per_file_chars = max(220, total_chars // max(args.top_k + len(_ALWAYS_CONTEXT_FILES) + 2, 1))
+
+    results = idx.query(args.task, top_k=max(args.top_k + len(_ALWAYS_CONTEXT_FILES), args.top_k))
+    always = [rel for rel in _ALWAYS_CONTEXT_FILES if (root / rel).exists()]
+    always_set = set(always)
+    relevant = []
+    for result in results:
+        rel = result["path"]
+        if rel in always_set:
+            continue
+        relevant.append(result)
+        if len(relevant) >= args.top_k:
+            break
+
+    lines = [
+        "# Agent Memory Context Pack",
+        "",
+        f"Task: {args.task}",
+        f"Budget: ~{budget} tokens",
+        "",
+        "## Always Included",
+    ]
+
+    if always:
+        for rel in always:
+            lines.append(_render_context_file(root, rel, per_file_chars))
+            lines.append("")
+    else:
+        lines.append("No standard memory files found.")
+        lines.append("")
+
+    lines.append("## Relevant Memory")
+    if relevant:
+        for result in relevant:
+            rel = result["path"]
+            snippet = result.get("snippet", "") or _read_rel(root, rel)
+            snippet = _truncate_for_budget(snippet.strip(), per_file_chars)
+            lines.append(f"### {rel} (score: {result['score']})")
+            lines.append(snippet or "No snippet available.")
+            lines.append("")
+    else:
+        lines.append("No additional relevant memory found.")
+        lines.append("")
+
+    files_to_read = always + [r["path"] for r in relevant]
+    lines.append("## Files To Read Fully")
+    for rel in files_to_read:
+        lines.append(f"- {rel}")
+
+    print("\n".join(lines).rstrip())
+
 
 # ── Main ───────────────────────────────────────────────────────────────────
 
@@ -768,6 +867,7 @@ def main():
   agent-memory init            Initialize .ai/ files in current repo
   agent-memory validate        Check memory file integrity
   agent-memory compress        Reduce bloat in memory files
+  agent-memory context "task"  Build compact context pack for a task
   agent-memory index           Build BM25 search index
   agent-memory query "terms"   BM25 search (ranked results)
   agent-memory search <term>   Find files containing term
@@ -785,6 +885,12 @@ def main():
 
     comp_p = sub.add_parser("compress", help="Compress bloated memory files")
     comp_p.set_defaults(func=cmd_compress)
+
+    ctx_p = sub.add_parser("context", help="Build compact context pack for a task")
+    ctx_p.add_argument("task", help="Task description to retrieve relevant memory for")
+    ctx_p.add_argument("-k", "--top-k", type=int, default=3, help="Relevant memory files to include (default: 3)")
+    ctx_p.add_argument("--budget", type=int, default=4000, help="Approximate token budget (default: 4000)")
+    ctx_p.set_defaults(func=cmd_context)
 
     idx_p = sub.add_parser("index", help="Build BM25 search index for .ai/ files")
     idx_p.set_defaults(func=cmd_index)
