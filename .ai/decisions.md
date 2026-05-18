@@ -31,11 +31,12 @@ Impact:
 
 Tradeoffs:
 - Token counting approximate.
-- AGENTS read-order still needs separate context-first rule update.
+- Agents rely on CLI availability for optimal path; manual read list remains fallback.
 
 Revisit when:
 - Adding real tokenizer dependency or model-specific budgeting.
 - Adding `finish`/`install` runtime commands.
+- Context command becomes unavailable in target agent environments.
 
 ## Superseded decisions
 

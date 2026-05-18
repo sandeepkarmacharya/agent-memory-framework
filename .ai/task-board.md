@@ -12,7 +12,6 @@ Keep this simple and current. Prefer small vertical slices.
 
 ## Backlog
 
-- Update AGENTS first-rule to prefer `agent-memory context` over reading all `.ai/` files.
 - Add `install` command for drop-in project setup.
 - Add `doctor` command for memory/index/hook/staleness health.
 - Add CI workflow.
@@ -24,6 +23,8 @@ Keep this simple and current. Prefer small vertical slices.
 
 ## Done
 
+- Updated AGENTS first-rule to prefer `agent-memory context "<task>"` over reading all `.ai/` files.
+- Added tests that enforce context-first AGENTS instructions.
 - Added `agent-memory context "<task>"` command.
 - Added tests for context pack output and budget truncation.
 - Documented context command in README, AGENTS command table, skills README.

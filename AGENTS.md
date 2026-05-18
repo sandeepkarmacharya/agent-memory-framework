@@ -6,26 +6,24 @@ This repository uses the Agent Memory Framework. All AI agents must follow these
 
 Do not start from scratch unless the user explicitly asks for a reset.
 
-Before doing any work, read the relevant memory files in `.ai/`. At minimum, read:
+Do not read all `.ai/` files by default. Before doing any work, build a compact task-specific context pack:
+
+```bash
+python scripts/agent-memory context "<task>"
+```
+
+Use the returned `Files To Read Fully` list for deeper follow-up. Read only those files unless the task clearly needs broader context.
+
+Fallback only: if the CLI is unavailable, manually read the smallest useful set:
 
 1. `.ai/agent-handoff.md`
 2. `.ai/current-state.md`
 3. `.ai/task-board.md`
-4. `.ai/decisions.md`
-5. `.ai/architecture.md`
-6. `.ai/graph-memory.yaml`
-7. `.ai/bugs-and-fixes.md`
+4. `.ai/decisions.md` when decisions matter
+5. `.ai/architecture.md` when architecture/files/APIs matter
+6. `.ai/bugs-and-fixes.md` when debugging or touching fragile areas
 
-For brand-new setup, also read:
-
-1. `.ai/project-brief.md`
-2. `.ai/coding-standards.md`
-3. `.ai/shared-language.md`
-4. `.ai/memory-index.md`
-5. `.ai/test-results.md`
-6. `.ai/dependencies.md`
-7. `.ai/security.md`
-8. `.ai/api-contracts.md`
+For brand-new setup, run `python scripts/agent-memory init` first, then use `context`.
 
 ## CLI tool
 
@@ -45,16 +43,16 @@ A `scripts/agent-memory` CLI is available for common operations:
 
 ## Retrieval layer (BM25)
 
-Instead of reading all `.ai/` files (expensive), use **semantic search**:
+Use context packs first. Raw query is the lower-level fallback.
 
-1. Build the index: `python scripts/agent-memory index`
-2. Query specific topics: `python scripts/agent-memory query "database schema config"`
-3. Only read the top matching files in full.
+1. Build a task pack: `python scripts/agent-memory context "<task>"`
+2. Read only files listed under `Files To Read Fully`
+3. If more detail is needed, query specific topics: `python scripts/agent-memory query "database schema config"`
 
-This cuts token cost by only loading relevant context. Use for:
-- **Quick context:** "What is the database schema?" → query → read 1-2 files
-- **Debugging:** "error handling auth middleware" → query → find relevant files
-- **Onboarding:** "project architecture goals" → query → summarize
+This cuts token cost by loading relevant context instead of every `.ai/` file. Use for:
+- **Quick context:** "What is the database schema?" → context/query → read 1-2 files
+- **Debugging:** "error handling auth middleware" → context/query → find relevant files
+- **Onboarding:** "project architecture goals" → context → summarize
 
 ## Import from existing project
 

@@ -7,13 +7,14 @@ Building.
 ## What is built
 
 - CLI: `init`, `validate`, `compress`, `index`, `query`, `search`, `import`, `suggest`.
-- New CLI: `context "<task>"` builds compact task-specific context pack.
+- CLI: `context "<task>"` builds compact task-specific context pack.
 - Context pack always includes handoff/current-state/task-board, then BM25-ranked relevant memory.
 - Context pack supports `--top-k` and `--budget` with truncation marker.
+- AGENTS first rule is context-first: agents run `agent-memory context "<task>"` before reading memory files.
 
 ## What is partially built
 
-- Automatic memory runtime: context step done; finish/install/doctor pending.
+- Automatic memory runtime: context-first start done; finish/install/doctor pending.
 
 ## What is broken
 
@@ -33,7 +34,7 @@ Building.
 
 ## Validation status
 
-- Tests run: `python -m pytest -q` -> 2 passed.
+- Tests run: `python -m pytest -q` -> 4 passed.
 - Manual checks: `agent-memory context`, `validate`, `index` passed.
 - Known unverified areas: no CI yet; no install packaging yet.
 

@@ -4,33 +4,30 @@ This is the primary file for switching agents. Keep it concise and current.
 
 ## Latest session summary
 
-Added first automation step: `agent-memory context "<task>"`.
+Completed step 2: AGENTS now tells agents to run `agent-memory context "<task>"` before reading memory files.
 
 ## What was completed
 
-- Added compact context pack CLI command.
-- Added budget-aware truncation.
-- Added always-included continuity files.
-- Added BM25-ranked relevant memory section.
-- Added tests.
-- Updated README, AGENTS command table, skills README.
+- Replaced broad minimum-read list in AGENTS first rule.
+- Added context-first instruction with fallback-only manual read list.
+- Updated retrieval section to prefer context packs before raw query.
+- Added tests for AGENTS context-first behavior.
 
 ## Files changed
 
-- `scripts/agent-memory`
-- `tests/test_context_command.py`
-- `README.md`
 - `AGENTS.md`
-- `skills/README.md`
+- `tests/test_agent_instructions.py`
 - `.ai/current-state.md`
 - `.ai/task-board.md`
 - `.ai/agent-handoff.md`
 - `.ai/test-results.md`
 - `.ai/decisions.md`
+- `.ai/.memory_index/index.json`
 
 ## Decisions made
 
-- Use `context` as first runtime abstraction above raw `query`/manual slash commands.
+- Context pack is now the default task-start path for agents.
+- Raw query/manual file reads are fallback or deeper follow-up only.
 
 ## Bugs found or fixed
 
@@ -38,7 +35,7 @@ Added first automation step: `agent-memory context "<task>"`.
 
 ## Current task status
 
-- Step 1 complete.
+- Step 2 complete.
 
 ## Next recommended task
 
@@ -47,27 +44,26 @@ Added first automation step: `agent-memory context "<task>"`.
 ## Commands run
 
 ```bash
-python -m pytest tests/test_context_command.py -q
+python -m pytest tests/test_agent_instructions.py -q
 python -m pytest -q
-python scripts/agent-memory context "fix auth redirect bug" --top-k 2 --budget 1200
+python scripts/agent-memory context "update AGENTS first rule to context first" --top-k 2 --budget 1200
 python scripts/agent-memory validate
 python scripts/agent-memory index
 ```
 
 ## Validation status
 
-- Tests run: 2 passed.
+- Tests run: 4 passed.
 - Manual checks: context output, validate, index passed.
 - Not verified: packaging/CI absent.
 
 ## Warnings for next agent
 
-- `validate` still warns about unchanged template files: graph-memory, test-results, dependencies, security, api-contracts.
-- AGENTS first-rule still asks agents to read many files; next step should switch that to context-first.
+- `validate` still warns about unchanged template files: graph-memory, dependencies, security, api-contracts.
 
 ## Do not redo
 
-- Do not re-add context command; extend it only if needed.
+- Do not re-add context-first AGENTS rule; extend only if needed.
 
 ## Suggested next prompt
 
