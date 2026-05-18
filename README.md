@@ -16,7 +16,7 @@ AI agents forget everything when the session ends. Switching agents means starti
 - **Pre-commit hook** — automatic memory validation + index rebuild before every `git commit`
 - **Git-aware suggestions** — `suggest` command analyzes recent changes and proposes memory updates
 - **Caveman mode** — terse communication saves ~75% token usage
-- **IDE integration** — `claude.md` and `.cursorrules` included for zero-config agent onboarding
+- **IDE integration** — `CLAUDE.md`, `.cursorrules`, `.codex/AGENTS.md`, and `HERMES.md` generated for zero-config agent onboarding
 - **Agent-agnostic** — works with Claude Code, Cursor, Continue, opencode, Hermes Agent, and any tool that reads repo files
 
 ## Quick Start
@@ -31,7 +31,7 @@ python scripts/agent-memory install --target /path/to/your/project
 python scripts/agent-memory install --target .
 ```
 
-This copies `AGENTS.md`, `scripts/agent-memory`, the retrieval package, `.ai/` templates, and `.githooks/pre-commit` into the target project. Existing project files are preserved. If the target is a Git repo, the installer enables `core.hooksPath = .githooks` automatically.
+This copies `AGENTS.md`, agent hook files (`CLAUDE.md`, `.cursorrules`, `.codex/AGENTS.md`, `HERMES.md`), `scripts/agent-memory`, the retrieval package, `.ai/` templates, and `.githooks/pre-commit` into the target project. Existing project files are preserved. If the target is a Git repo, the installer enables `core.hooksPath = .githooks` automatically.
 
 ### 2. Start working with your agent
 
@@ -110,6 +110,7 @@ python scripts/agent-memory install --target ../my-project
 Behavior:
 - Creates the target directory if needed
 - Copies `AGENTS.md` only when missing; never overwrites existing project instructions
+- Creates agent hook files for Claude, Cursor, Codex, and Hermes so agents auto-run `context` and `finish`
 - Creates `.ai/` memory templates
 - Copies `scripts/agent-memory` and `scripts/memory_query/`
 - Creates `.githooks/pre-commit`
@@ -262,24 +263,30 @@ If you modified source files, it suggests updating `current-state.md`, `task-boa
 Works with **any** AI coding agent that can read repo files and follow instructions.
 
 ### Claude Code
-`claude.md` is provided in the repo root. Claude Code reads it automatically and follows the memory framework.
+`CLAUDE.md` is generated in the repo root. Claude Code reads it automatically and runs `context` before work plus `finish` after meaningful work.
 
 ### Cursor
-`.cursorrules` is provided in the repo root. Cursor loads it automatically when you open the project.
+`.cursorrules` is generated in the repo root. Cursor loads it automatically when you open the project and follows the same memory workflow.
 
-### Other Agents (Continue, opencode, Hermes Agent, etc.)
-The agent reads `AGENTS.md` → loads `.ai/` memory files → executes slash commands via skills folder. The `prompts.md` file contains reusable prompts for agents that don't support skill loading.
+### Codex
+`.codex/AGENTS.md` is generated with the same auto-hook workflow for Codex-specific project instructions.
+
+### Hermes Agent
+`HERMES.md` is generated with the same auto-hook workflow. `AGENTS.md` remains the general entry point.
+
+### Other Agents (Continue, opencode, etc.)
+The agent reads `AGENTS.md` → runs `context` → reads only selected `.ai/` memory files → does work → runs `finish`. The `prompts.md` file contains reusable prompts for agents that don't support skill loading.
 
 ## How It Works
 
 ```
 Agent starts
-  -> reads AGENTS.md
-  -> reads .ai/ memory files (in priority order)
-  -> understands full project context
+  -> reads agent hook file (AGENTS.md / CLAUDE.md / .cursorrules / .codex/AGENTS.md / HERMES.md)
+  -> runs: python scripts/agent-memory context "<task>"
+  -> reads only context pack + listed files
   -> does work
-  -> updates .ai/ files (current-state, task-board, handoff, etc.)
-  -> writes handoff for next agent
+  -> runs: python scripts/agent-memory finish --summary "<done>" --next "<next>"
+  -> updates core .ai/ files and retrieval index
 ```
 
 Next agent — same or different model/tool — picks up exactly where the previous one left off. **Zero chat history needed.**
@@ -288,9 +295,12 @@ Next agent — same or different model/tool — picks up exactly where the previ
 
 ```
 your-repo/
-  AGENTS.md               <- Agent entry point (required)
-  claude.md                <- Claude Code integration
-  .cursorrules             <- Cursor integration
+  AGENTS.md               <- General agent entry point
+  CLAUDE.md               <- Claude Code auto-hooks
+  .cursorrules            <- Cursor auto-hooks
+  HERMES.md               <- Hermes Agent auto-hooks
+  .codex/
+    AGENTS.md             <- Codex auto-hooks
   .githooks/
     pre-commit             <- Validation hook
   .ai/

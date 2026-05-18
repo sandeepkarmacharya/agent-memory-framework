@@ -4,10 +4,12 @@
 
 | Suite | Pass | Fail | Skip | Coverage |
 |---|---:|---:|---:|---|
-| pytest | 8 | 0 | 0 | Not measured |
+| pytest | 9 | 0 | 0 | Not measured |
 
 ## Recent Runs
 
+- [2026-05-18] `python -m pytest tests/test_install_command.py -q` -> 3 passed.
+- [2026-05-18] `python -m pytest -q` -> 9 passed.
 - [2026-05-18] `python -m pytest tests/test_install_command.py -q` -> 2 passed.
 - [2026-05-18] `python -m pytest -q` -> 8 passed.
 - [2026-05-18] `python -m pytest tests/test_finish_command.py -q` -> 2 passed.

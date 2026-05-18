@@ -51,3 +51,11 @@ Ideas useful but not urgent:
 
 ### Next
 - add automatic background memory optimization hooks
+
+## 2026-05-18 — Task Update
+
+### Done
+- added generated agent auto-hook instruction files
+
+### Next
+- add optional background memory optimizer/watch command

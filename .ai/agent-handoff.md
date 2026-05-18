@@ -96,3 +96,13 @@ Continue one step: implement agent-memory finish --summary with tests first.
 - `README.md`
 - `scripts/agent-memory`
 - `tests/test_install_command.py`
+
+## 2026-05-18 — Finish
+
+- Summary: added generated agent auto-hook instruction files
+- Next: add optional background memory optimizer/watch command
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `tests/test_install_command.py`

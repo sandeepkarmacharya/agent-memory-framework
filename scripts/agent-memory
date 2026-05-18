@@ -377,6 +377,38 @@ bugs: {}
 """,
 }
 
+AGENT_HOOK_TEMPLATE = """# Agent Memory Auto-Hooks
+
+This project uses Agent Memory Framework. Optimize token usage by loading only task-relevant memory.
+
+## Task start
+
+Before making changes, run:
+
+```bash
+python scripts/agent-memory context "<task>"
+```
+
+Read only the returned `Files To Read Fully` unless the task clearly needs broader context.
+
+## Task finish
+
+After meaningful work, run:
+
+```bash
+python scripts/agent-memory finish --summary "<what changed>" --next "<next task>"
+```
+
+This updates long-term memory and rebuilds the retrieval index. Do not ask the user to remember these commands; run them automatically.
+"""
+
+AGENT_HOOK_FILES = {
+    "CLAUDE.md": AGENT_HOOK_TEMPLATE,
+    ".cursorrules": AGENT_HOOK_TEMPLATE,
+    ".codex/AGENTS.md": AGENT_HOOK_TEMPLATE,
+    "HERMES.md": AGENT_HOOK_TEMPLATE,
+}
+
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 def _root() -> Path:
@@ -493,6 +525,17 @@ def cmd_install(args):
         else:
             path.write_text(content.strip() + "\n", encoding="utf-8")
             _info(f"Created .ai/{fname}")
+            created += 1
+
+    for rel, content in AGENT_HOOK_FILES.items():
+        path = target / rel
+        if path.exists():
+            _warn(f"{rel} already exists — leaving agent hook unchanged")
+            skipped += 1
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content.strip() + "\n", encoding="utf-8")
+            _info(f"Created {rel}")
             created += 1
 
     scripts_dir = target / "scripts"
