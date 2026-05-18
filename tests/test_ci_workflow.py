@@ -30,3 +30,4 @@ def test_ci_workflow_uses_multiple_supported_python_versions():
     assert "actions/checkout@v4" in text
     assert "actions/setup-python@v5" in text
     assert "python -m pip install pytest" in text
+    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in text
