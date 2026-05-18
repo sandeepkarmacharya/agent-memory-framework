@@ -11,7 +11,7 @@ AI agents forget everything when the session ends. Switching agents means starti
 - **Context pack generator** — `context "<task>"` returns continuity files + ranked relevant memory within an approximate token budget
 - **BM25 retrieval layer** — ranked full-text search across memory files; agents query specific context instead of reading everything (saves ~50-80% token overhead)
 - **Repo importer** — bootstrap `.ai/` from any existing project by scanning source code, dependencies, and structure
-- **CLI tool** — `install`, `init`, `validate`, `compress`, `context`, `finish`, `index`, `query`, `search`, `import`, `suggest`
+- **CLI tool** — `install`, `init`, `validate`, `optimize`, `compress`, `context`, `finish`, `index`, `query`, `search`, `import`, `suggest`
 - **13 slash-command skills** — `/new`, `/continue`, `/handoff`, `/debug`, `/feature`, `/review`, etc.
 - **Pre-commit hook** — automatic memory validation + index rebuild before every `git commit`
 - **Git-aware suggestions** — `suggest` command analyzes recent changes and proposes memory updates
@@ -89,6 +89,7 @@ The old `graph-memory.md` was plain text — agents parsed it inconsistently and
 python scripts/agent-memory install --target ../my-project  # Drop-in setup for another project
 python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
 python scripts/agent-memory validate    # Check all files exist and have content
+python scripts/agent-memory optimize    # Report bloat/stale index; add --apply to fix safe issues
 python scripts/agent-memory compress    # Compress bloated memory files
 python scripts/agent-memory context "fix auth bug" --budget 4000  # Compact context pack for a task
 python scripts/agent-memory finish --summary "fixed auth bug" --next "add regression tests"  # Update memory after work
@@ -133,6 +134,26 @@ Checks required and recommended files:
 - Reports missing recommended files
 - Checks skill directory completeness
 - Reports pre-commit hook status
+
+### `optimize`
+
+Reports memory bloat and stale/missing retrieval index without changing files:
+
+```bash
+python scripts/agent-memory optimize
+```
+
+Apply safe cleanup:
+
+```bash
+python scripts/agent-memory optimize --apply
+```
+
+Behavior:
+- Scans `.ai/*.md` and `.ai/*.yaml`
+- Flags files above `--max-bytes` threshold
+- Detects stale or missing `.ai/.memory_index/index.json`
+- With `--apply`, deduplicates repeated long lines, collapses extra blank lines, and rebuilds the BM25 index
 
 ### `compress`
 

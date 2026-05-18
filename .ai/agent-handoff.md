@@ -106,3 +106,13 @@ Continue one step: implement agent-memory finish --summary with tests first.
 - `README.md`
 - `scripts/agent-memory`
 - `tests/test_install_command.py`
+
+## 2026-05-18 — Finish
+
+- Summary: added optimize command for memory bloat and stale index cleanup
+- Next: wire optimize into install/agent hooks as periodic maintenance
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `tests/test_optimize_command.py`

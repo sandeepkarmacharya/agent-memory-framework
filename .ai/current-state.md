@@ -60,3 +60,9 @@ Building.
 - Latest progress: added generated agent auto-hook instruction files
 - Next recommended task: add optional background memory optimizer/watch command
 - Last updated: 2026-05-18
+
+## 2026-05-18 — Latest Progress
+
+- Latest progress: added optimize command for memory bloat and stale index cleanup
+- Next recommended task: wire optimize into install/agent hooks as periodic maintenance
+- Last updated: 2026-05-18

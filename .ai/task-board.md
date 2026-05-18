@@ -59,3 +59,11 @@ Ideas useful but not urgent:
 
 ### Next
 - add optional background memory optimizer/watch command
+
+## 2026-05-18 — Task Update
+
+### Done
+- added optimize command for memory bloat and stale index cleanup
+
+### Next
+- wire optimize into install/agent hooks as periodic maintenance

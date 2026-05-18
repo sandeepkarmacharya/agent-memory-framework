@@ -34,6 +34,7 @@ A `scripts/agent-memory` CLI is available for common operations:
 | `python scripts/agent-memory install --target <path>` | Drop-in install into another project; creates agent auto-hook files |
 | `python scripts/agent-memory init` | Initialize or repair `.ai/` memory files |
 | `python scripts/agent-memory validate` | Check all files exist and have valid content |
+| `python scripts/agent-memory optimize [--apply]` | Detect memory bloat/staleness; optionally compress and reindex |
 | `python scripts/agent-memory compress` | Compress bloated memory files |
 | `python scripts/agent-memory context "<task>"` | Build compact task-specific context pack |
 | `python scripts/agent-memory finish --summary "<done>"` | Update core memory after a task |

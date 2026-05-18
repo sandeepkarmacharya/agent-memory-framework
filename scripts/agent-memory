@@ -8,6 +8,7 @@ Usage:
     agent-memory context       Build compact context pack for a task
     agent-memory finish        Update core memory after a task
     agent-memory install       Install framework into another project
+    agent-memory optimize      Detect stale/bloated memory and refresh index
 
 Install as:
     chmod +x scripts/agent-memory
@@ -658,6 +659,56 @@ def cmd_validate(args):
     return errors
 
 
+def _compress_memory_file(path: Path) -> tuple[int, int, int]:
+    """Safely deduplicate repeated long lines and extra blank lines."""
+    text = path.read_text(encoding="utf-8")
+    original_len = len(text)
+    if original_len < 50:
+        return original_len, original_len, 0
+
+    new_lines = []
+    dedup_set = set()
+    empty_line_run = 0
+    removed = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            empty_line_run += 1
+            if empty_line_run <= 1:
+                new_lines.append(line)
+            else:
+                removed += 1
+            continue
+        empty_line_run = 0
+        if stripped in dedup_set and len(stripped) > 20:
+            removed += 1
+            continue
+        dedup_set.add(stripped)
+        new_lines.append(line)
+
+    new_text = "\n".join(new_lines).rstrip() + "\n"
+    if len(new_text) < original_len:
+        path.write_text(new_text, encoding="utf-8")
+    return original_len, len(new_text), removed
+
+
+def _memory_markdown_files(ai_dir: Path) -> list[Path]:
+    if not ai_dir.exists():
+        return []
+    return sorted(
+        path for path in ai_dir.rglob("*")
+        if path.is_file() and ".memory_index" not in path.parts and path.suffix in {".md", ".yaml", ".yml"}
+    )
+
+
+def _index_is_stale(ai_dir: Path, memory_files: list[Path]) -> bool:
+    index_path = ai_dir / ".memory_index" / "index.json"
+    if not index_path.exists():
+        return True
+    index_mtime = index_path.stat().st_mtime
+    return any(path.stat().st_mtime > index_mtime for path in memory_files)
+
+
 def cmd_compress(args):
     """Compress memory files: deduplicate, truncate old entries, keep current state."""
     root = _root()
@@ -673,55 +724,64 @@ def cmd_compress(args):
             _warn(f"Skipping {rel} — not found")
             continue
 
-        text = path.read_text(encoding="utf-8")
-        original_len = len(text)
-        lines = text.splitlines()
-
-        # Skip empty files
-        if original_len < 50:
-            _info(f"{rel} — already small ({original_len} bytes), skipping")
-            continue
-
-        # Compression heuristics:
-        new_lines = []
-        dedup_set = set()
-        empty_line_run = 0
-        kept = 0
-        removed = 0
-
-        for line in lines:
-            stripped = line.strip()
-
-            # Collapse repeated empty lines
-            if not stripped:
-                empty_line_run += 1
-                if empty_line_run <= 1:
-                    new_lines.append(line)
-                else:
-                    removed += 1
-                continue
-            empty_line_run = 0
-
-            # Deduplicate exact repeated lines
-            if stripped in dedup_set and len(stripped) > 20:
-                removed += 1
-                continue
-            dedup_set.add(stripped)
-
-            new_lines.append(line)
-            kept += 1
-
-        new_text = "\n".join(new_lines)
-        new_len = len(new_text)
-
+        original_len, new_len, removed = _compress_memory_file(path)
         saved = original_len - new_len
         if saved > 0:
-            path.write_text(new_text + "\n", encoding="utf-8")
             _info(f"{rel} — compressed: {original_len} → {new_len} bytes ({saved} saved, {removed} lines removed)")
+        elif original_len < 50:
+            _info(f"{rel} — already small ({original_len} bytes), skipping")
         else:
             _info(f"{rel} — already clean ({original_len} bytes)")
 
     print("\nCompression complete.")
+
+
+def cmd_optimize(args):
+    """Report memory bloat/staleness and optionally apply safe cleanup."""
+    root = _root()
+    ai_dir = root / ".ai"
+    memory_files = _memory_markdown_files(ai_dir)
+    max_bytes = max(args.max_bytes, 100)
+    bloated = [(path, path.stat().st_size) for path in memory_files if path.stat().st_size > max_bytes]
+    stale_index = _index_is_stale(ai_dir, memory_files)
+
+    print("Memory optimization report")
+    print(f"Scanned files: {len(memory_files)}")
+    print(f"Index status: {'stale or missing' if stale_index else 'fresh'}")
+
+    print("\nBloated files")
+    if bloated:
+        for path, size in bloated:
+            print(f"- {path.relative_to(root)} ({size} bytes)")
+    else:
+        print("- None over threshold")
+
+    if not args.apply:
+        if bloated or stale_index:
+            print("\nRun with --apply to compress safely and rebuild the index.")
+        else:
+            print("\nNo optimization needed.")
+        return 0
+
+    total_saved = 0
+    compressed_count = 0
+    for path, _size in bloated:
+        before, after, _removed = _compress_memory_file(path)
+        saved = before - after
+        if saved > 0:
+            compressed_count += 1
+            total_saved += saved
+    print(f"\nApplied safe compression: {compressed_count} files, {total_saved} bytes saved")
+
+    try:
+        from memory_query import MemoryIndex
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from memory_query import MemoryIndex
+    idx = MemoryIndex(str(ai_dir))
+    idx.build(force=True)
+    print(f"Rebuilt memory index ({idx.num_docs} documents)")
+    return 0
 
 
 # ── Pre-commit hook content ────────────────────────────────────────────────
@@ -1082,6 +1142,7 @@ def main():
   agent-memory context "task"  Build compact context pack for a task
   agent-memory finish --summary "done"  Update memory after a task
   agent-memory install --target ../app  Install into another project
+  agent-memory optimize        Report memory bloat/staleness
   agent-memory index           Build BM25 search index
   agent-memory query "terms"   BM25 search (ranked results)
   agent-memory search <term>   Find files containing term
@@ -1099,6 +1160,11 @@ def main():
 
     comp_p = sub.add_parser("compress", help="Compress bloated memory files")
     comp_p.set_defaults(func=cmd_compress)
+
+    opt_p = sub.add_parser("optimize", help="Report memory bloat/staleness and optionally fix it")
+    opt_p.add_argument("--apply", action="store_true", help="Apply safe compression and rebuild retrieval index")
+    opt_p.add_argument("--max-bytes", type=int, default=12000, help="Flag memory files above this size (default: 12000)")
+    opt_p.set_defaults(func=cmd_optimize)
 
     ctx_p = sub.add_parser("context", help="Build compact context pack for a task")
     ctx_p.add_argument("task", help="Task description to retrieve relevant memory for")
