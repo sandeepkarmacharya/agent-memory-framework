@@ -47,7 +47,7 @@ Agents should use the context pack first, then read only the files listed under 
 python scripts/agent-memory finish --summary "fixed auth bug" --next "add regression tests"
 ```
 
-This updates handoff/current-state/task-board and rebuilds the retrieval index. The user does not need to memorize slash commands; the repo-level `AGENTS.md` tells agents to run these commands automatically.
+This updates handoff/current-state/task-board and rebuilds the retrieval index. The user does not need to memorize slash commands; repo-level `AGENTS.md` and generated agent hook files tell agents to run `context`, `finish`, and periodic `optimize --apply` maintenance automatically.
 
 ## Memory Files
 
@@ -111,7 +111,7 @@ python scripts/agent-memory install --target ../my-project
 Behavior:
 - Creates the target directory if needed
 - Copies `AGENTS.md` only when missing; never overwrites existing project instructions
-- Creates agent hook files for Claude, Cursor, Codex, and Hermes so agents auto-run `context` and `finish`
+- Creates agent hook files for Claude, Cursor, Codex, and Hermes so agents auto-run `context`, `finish`, and periodic `optimize --apply` maintenance
 - Creates `.ai/` memory templates
 - Copies `scripts/agent-memory` and `scripts/memory_query/`
 - Creates `.githooks/pre-commit`

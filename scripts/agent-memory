@@ -400,7 +400,19 @@ After meaningful work, run:
 python scripts/agent-memory finish --summary "<what changed>" --next "<next task>"
 ```
 
-This updates long-term memory and rebuilds the retrieval index. Do not ask the user to remember these commands; run them automatically.
+This updates long-term memory and rebuilds the retrieval index.
+
+## Periodic maintenance
+
+When context feels stale, memory files get large, or after a few meaningful tasks, run:
+
+```bash
+python scripts/agent-memory optimize --apply
+```
+
+This performs safe memory cleanup and refreshes retrieval. Do not run it before every tiny task; use it as periodic maintenance so optimization stays automatic without slowing normal work.
+
+Do not ask the user to remember these commands; run them automatically.
 """
 
 AGENT_HOOK_FILES = {

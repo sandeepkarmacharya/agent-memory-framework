@@ -67,3 +67,11 @@ Ideas useful but not urgent:
 
 ### Next
 - wire optimize into install/agent hooks as periodic maintenance
+
+## 2026-05-18 — Task Update
+
+### Done
+- wired optimize into generated agent hooks and AGENTS maintenance guidance
+
+### Next
+- consider auto-updating existing hook files with opt-in upgrade command

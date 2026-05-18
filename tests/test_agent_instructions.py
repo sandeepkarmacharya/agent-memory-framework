@@ -22,3 +22,12 @@ def test_agents_retrieval_section_points_to_context_before_raw_query():
     context_pos = retrieval.index('python scripts/agent-memory context "<task>"')
     query_pos = retrieval.index('python scripts/agent-memory query')
     assert context_pos < query_pos
+
+
+def test_agents_required_updates_include_periodic_optimize_maintenance():
+    text = AGENTS.read_text(encoding="utf-8")
+    required = text.split("## Required memory updates", 1)[1].split("## Slash command mapping", 1)[0]
+
+    assert "python scripts/agent-memory optimize" in required
+    assert "periodic maintenance" in required
+    assert "when context feels stale" in required

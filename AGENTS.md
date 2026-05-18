@@ -111,7 +111,15 @@ After every meaningful task, run:
 python scripts/agent-memory finish --summary "<what changed>" --next "<next task>"
 ```
 
-This updates core memory and rebuilds the retrieval index. If the command is unavailable, manually update:
+This updates core memory and rebuilds the retrieval index.
+
+As periodic maintenance, when context feels stale, memory files get large, or after a few meaningful tasks, run:
+
+```bash
+python scripts/agent-memory optimize --apply
+```
+
+This safely cleans memory bloat and refreshes retrieval. Do not run before every tiny task; keep optimization automatic without slowing normal work. If the command is unavailable, manually update:
 
 - `.ai/current-state.md` — progress, blockers, next step
 - `.ai/task-board.md` — move tasks between Next/In Progress/Backlog/Done

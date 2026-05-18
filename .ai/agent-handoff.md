@@ -116,3 +116,14 @@ Continue one step: implement agent-memory finish --summary with tests first.
 - `README.md`
 - `scripts/agent-memory`
 - `tests/test_optimize_command.py`
+
+## 2026-05-18 — Finish
+
+- Summary: wired optimize into generated agent hooks and AGENTS maintenance guidance
+- Next: consider auto-updating existing hook files with opt-in upgrade command
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `tests/test_agent_instructions.py`
+- `tests/test_install_command.py`

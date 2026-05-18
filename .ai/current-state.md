@@ -66,3 +66,9 @@ Building.
 - Latest progress: added optimize command for memory bloat and stale index cleanup
 - Next recommended task: wire optimize into install/agent hooks as periodic maintenance
 - Last updated: 2026-05-18
+
+## 2026-05-18 — Latest Progress
+
+- Latest progress: wired optimize into generated agent hooks and AGENTS maintenance guidance
+- Next recommended task: consider auto-updating existing hook files with opt-in upgrade command
+- Last updated: 2026-05-18

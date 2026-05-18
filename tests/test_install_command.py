@@ -40,6 +40,8 @@ def test_install_bootstraps_target_project_without_existing_agents_file(tmp_path
         text = (project / rel).read_text(encoding="utf-8")
         assert 'python scripts/agent-memory context "<task>"' in text
         assert 'python scripts/agent-memory finish --summary "<what changed>" --next "<next task>"' in text
+        assert "python scripts/agent-memory optimize" in text
+        assert "periodic maintenance" in text
 
     hooks_path = subprocess.run(
         ["git", "config", "core.hooksPath"],
