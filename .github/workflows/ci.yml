@@ -30,6 +30,9 @@ jobs:
       - name: Show Python version
         run: python --version
 
+      - name: Install test dependencies
+        run: python -m pip install pytest
+
       - name: Compile Python sources
         run: |
           python -m py_compile scripts/agent-memory scripts/memory_query/*.py tests/*.py
