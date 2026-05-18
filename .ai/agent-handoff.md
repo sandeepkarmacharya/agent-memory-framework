@@ -127,3 +127,14 @@ Continue one step: implement agent-memory finish --summary with tests first.
 - `scripts/agent-memory`
 - `tests/test_agent_instructions.py`
 - `tests/test_install_command.py`
+
+## 2026-05-18 — Finish
+
+- Summary: added doctor health check command for setup memory index hooks and bloat
+- Next: add upgrade command to safely refresh existing generated hook files
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `tests/test_agent_instructions.py`
+- `tests/test_doctor_command.py`

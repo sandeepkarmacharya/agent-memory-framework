@@ -31,3 +31,5 @@ def test_agents_required_updates_include_periodic_optimize_maintenance():
     assert "python scripts/agent-memory optimize" in required
     assert "periodic maintenance" in required
     assert "when context feels stale" in required
+    assert "python scripts/agent-memory doctor" in required
+    assert "Next actions" in required

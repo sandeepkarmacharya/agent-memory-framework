@@ -89,6 +89,7 @@ The old `graph-memory.md` was plain text — agents parsed it inconsistently and
 python scripts/agent-memory install --target ../my-project  # Drop-in setup for another project
 python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
 python scripts/agent-memory validate    # Check all files exist and have content
+python scripts/agent-memory doctor      # One-command setup/memory/index/hook health check
 python scripts/agent-memory optimize    # Report bloat/stale index; add --apply to fix safe issues
 python scripts/agent-memory compress    # Compress bloated memory files
 python scripts/agent-memory context "fix auth bug" --budget 4000  # Compact context pack for a task
@@ -134,6 +135,24 @@ Checks required and recommended files:
 - Reports missing recommended files
 - Checks skill directory completeness
 - Reports pre-commit hook status
+
+### `doctor`
+
+Runs one health check for setup, memory, retrieval, hooks, and optimization state:
+
+```bash
+python scripts/agent-memory doctor
+python scripts/agent-memory doctor --max-bytes 8000
+```
+
+Behavior:
+- Checks `AGENTS.md`, installed CLI, required `.ai/` files, and template placeholders
+- Reports stale/missing BM25 index
+- Reports memory files above bloat threshold
+- Reports pre-commit hook presence and Git hook enablement
+- Prints actionable next commands such as `init`, `index`, `optimize --apply`, or hook setup
+
+Use this as the default support command when a project feels stale or misconfigured.
 
 ### `optimize`
 

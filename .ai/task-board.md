@@ -75,3 +75,11 @@ Ideas useful but not urgent:
 
 ### Next
 - consider auto-updating existing hook files with opt-in upgrade command
+
+## 2026-05-18 — Task Update
+
+### Done
+- added doctor health check command for setup memory index hooks and bloat
+
+### Next
+- add upgrade command to safely refresh existing generated hook files

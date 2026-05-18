@@ -34,6 +34,7 @@ A `scripts/agent-memory` CLI is available for common operations:
 | `python scripts/agent-memory install --target <path>` | Drop-in install into another project; creates agent auto-hook files |
 | `python scripts/agent-memory init` | Initialize or repair `.ai/` memory files |
 | `python scripts/agent-memory validate` | Check all files exist and have valid content |
+| `python scripts/agent-memory doctor [--max-bytes N]` | One-command setup/memory/index/hook health check |
 | `python scripts/agent-memory optimize [--apply]` | Detect memory bloat/staleness; optionally compress and reindex |
 | `python scripts/agent-memory compress` | Compress bloated memory files |
 | `python scripts/agent-memory context "<task>"` | Build compact task-specific context pack |
@@ -119,7 +120,15 @@ As periodic maintenance, when context feels stale, memory files get large, or af
 python scripts/agent-memory optimize --apply
 ```
 
-This safely cleans memory bloat and refreshes retrieval. Do not run before every tiny task; keep optimization automatic without slowing normal work. If the command is unavailable, manually update:
+This safely cleans memory bloat and refreshes retrieval. Do not run before every tiny task; keep optimization automatic without slowing normal work.
+
+When setup or memory health is unclear, run:
+
+```bash
+python scripts/agent-memory doctor
+```
+
+Use its `Next actions` output instead of guessing maintenance commands. If the command is unavailable, manually update:
 
 - `.ai/current-state.md` — progress, blockers, next step
 - `.ai/task-board.md` — move tasks between Next/In Progress/Backlog/Done

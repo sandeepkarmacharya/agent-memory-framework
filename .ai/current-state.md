@@ -72,3 +72,9 @@ Building.
 - Latest progress: wired optimize into generated agent hooks and AGENTS maintenance guidance
 - Next recommended task: consider auto-updating existing hook files with opt-in upgrade command
 - Last updated: 2026-05-18
+
+## 2026-05-18 — Latest Progress
+
+- Latest progress: added doctor health check command for setup memory index hooks and bloat
+- Next recommended task: add upgrade command to safely refresh existing generated hook files
+- Last updated: 2026-05-18

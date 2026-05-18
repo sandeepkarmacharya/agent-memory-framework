@@ -9,6 +9,7 @@ Usage:
     agent-memory finish        Update core memory after a task
     agent-memory install       Install framework into another project
     agent-memory optimize      Detect stale/bloated memory and refresh index
+    agent-memory doctor        Check setup, memory health, retrieval, hooks
 
 Install as:
     chmod +x scripts/agent-memory
@@ -748,6 +749,132 @@ def cmd_compress(args):
     print("\nCompression complete.")
 
 
+def _hook_is_enabled(root: Path) -> bool:
+    if not (root / ".git").exists():
+        return False
+    result = subprocess.run(
+        ["git", "config", "core.hooksPath"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    return result.returncode == 0 and result.stdout.strip() == ".githooks"
+
+
+def cmd_doctor(args):
+    """One-command health check for setup, memory files, retrieval, hooks, and bloat."""
+    root = Path.cwd()
+    ai_dir = root / ".ai"
+    errors = 0
+    warnings = 0
+    next_actions: list[str] = []
+
+    print("Agent Memory Doctor")
+    print(f"Project: {root}")
+
+    print("\nSetup health")
+    if (root / "AGENTS.md").exists():
+        _info("AGENTS.md present")
+    else:
+        _err("Missing required: AGENTS.md")
+        errors += 1
+        next_actions.append("python scripts/agent-memory install --target .")
+
+    cli_path = root / "scripts" / "agent-memory"
+    if cli_path.exists():
+        _info("scripts/agent-memory present")
+    else:
+        _warn("scripts/agent-memory missing")
+        warnings += 1
+        if "python scripts/agent-memory install --target ." not in next_actions:
+            next_actions.append("python scripts/agent-memory install --target .")
+
+    print("\nMemory files")
+    missing_required = []
+    unchanged_templates = []
+    for rel in REQUIRED_FILES:
+        path = root / rel
+        if not path.exists():
+            missing_required.append(rel)
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace").strip()
+        if not text:
+            missing_required.append(rel)
+            continue
+        if rel.startswith(".ai/") and text == TEMPLATES.get(rel.split("/")[-1], "").strip():
+            unchanged_templates.append(rel)
+    if missing_required:
+        for rel in missing_required:
+            _err(f"Missing required: {rel}")
+        errors += len(missing_required)
+        if "python scripts/agent-memory init" not in next_actions:
+            next_actions.append("python scripts/agent-memory init")
+    else:
+        _info(f"Required files present ({len(REQUIRED_FILES)})")
+    if unchanged_templates:
+        _warn(f"Template files still need project details ({len(unchanged_templates)})")
+        warnings += len(unchanged_templates)
+    recommended_missing = [rel for rel in RECOMMENDED_FILES if not (root / rel).exists()]
+    if recommended_missing:
+        _warn(f"Recommended files missing ({len(recommended_missing)})")
+        warnings += len(recommended_missing)
+
+    print("\nRetrieval index")
+    memory_files = _memory_markdown_files(ai_dir)
+    stale_index = _index_is_stale(ai_dir, memory_files)
+    if memory_files and not stale_index:
+        _info(f"Index fresh ({len(memory_files)} memory files)")
+    elif memory_files:
+        _warn("Index stale or missing")
+        warnings += 1
+        next_actions.append("python scripts/agent-memory index")
+    else:
+        _warn("No .ai memory files found")
+        warnings += 1
+
+    print("\nOptimization")
+    max_bytes = max(getattr(args, "max_bytes", 12000), 100)
+    bloated = [(path, path.stat().st_size) for path in memory_files if path.stat().st_size > max_bytes]
+    if bloated:
+        _warn(f"Bloated memory files over {max_bytes} bytes ({len(bloated)})")
+        warnings += len(bloated)
+        next_actions.append("python scripts/agent-memory optimize --apply")
+    else:
+        _info(f"No memory files over {max_bytes} bytes")
+
+    print("\nGit hooks")
+    hook_path = root / ".githooks" / "pre-commit"
+    if hook_path.exists() and os.access(str(hook_path), os.X_OK):
+        _info("Pre-commit hook present and executable")
+        if _hook_is_enabled(root):
+            _info("Pre-commit hook enabled")
+        elif (root / ".git").exists():
+            _warn("Pre-commit hook not enabled")
+            warnings += 1
+            next_actions.append("git config core.hooksPath .githooks")
+    else:
+        _warn("Pre-commit hook missing or not executable")
+        warnings += 1
+
+    print("\nNext actions")
+    if next_actions:
+        for action in dict.fromkeys(next_actions):
+            print(f"- {action}")
+    else:
+        print("- None")
+
+    print(f"\n{'─' * 40}")
+    if errors:
+        print(f"RESULT: NEEDS FIXES ({errors} errors, {warnings} warnings)")
+        return errors
+    if warnings:
+        print(f"RESULT: READY with {warnings} warnings")
+        return 0
+    print("RESULT: READY")
+    return 0
+
+
 def cmd_optimize(args):
     """Report memory bloat/staleness and optionally apply safe cleanup."""
     root = _root()
@@ -1150,6 +1277,7 @@ def main():
         epilog="""Examples:
   agent-memory init            Initialize .ai/ files in current repo
   agent-memory validate        Check memory file integrity
+  agent-memory doctor          Check setup, memory, index, hooks, bloat
   agent-memory compress        Reduce bloat in memory files
   agent-memory context "task"  Build compact context pack for a task
   agent-memory finish --summary "done"  Update memory after a task
@@ -1169,6 +1297,10 @@ def main():
 
     val_p = sub.add_parser("validate", help="Validate memory file integrity")
     val_p.set_defaults(func=cmd_validate)
+
+    doc_p = sub.add_parser("doctor", help="Check setup, memory health, retrieval index, hooks, and bloat")
+    doc_p.add_argument("--max-bytes", type=int, default=12000, help="Flag memory files above this size (default: 12000)")
+    doc_p.set_defaults(func=cmd_doctor)
 
     comp_p = sub.add_parser("compress", help="Compress bloated memory files")
     comp_p.set_defaults(func=cmd_compress)
