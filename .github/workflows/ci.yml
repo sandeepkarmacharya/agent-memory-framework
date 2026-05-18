@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python ${{ matrix.python-version }} quality gates
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Show Python version
+        run: python --version
+
+      - name: Compile Python sources
+        run: |
+          python -m py_compile scripts/agent-memory scripts/memory_query/*.py tests/*.py
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Validate memory framework
+        run: python scripts/agent-memory validate
+
+      - name: Check setup health
+        run: python scripts/agent-memory doctor
+
+      - name: Check memory optimization state
+        run: python scripts/agent-memory optimize
+
+      - name: Rebuild retrieval index
+        run: python scripts/agent-memory index
