@@ -83,3 +83,11 @@ Ideas useful but not urgent:
 
 ### Next
 - add upgrade command to safely refresh existing generated hook files
+
+## 2026-05-18 — Task Update
+
+### Done
+- added upgrade command to refresh managed hooks and framework runtime safely
+
+### Next
+- add GitHub Actions CI for tests validate doctor

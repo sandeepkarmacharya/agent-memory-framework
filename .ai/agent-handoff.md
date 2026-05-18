@@ -138,3 +138,13 @@ Continue one step: implement agent-memory finish --summary with tests first.
 - `scripts/agent-memory`
 - `tests/test_agent_instructions.py`
 - `tests/test_doctor_command.py`
+
+## 2026-05-18 — Finish
+
+- Summary: added upgrade command to refresh managed hooks and framework runtime safely
+- Next: add GitHub Actions CI for tests validate doctor
+- Changed files:
+- `AGENTS.md`
+- `README.md`
+- `scripts/agent-memory`
+- `tests/test_install_command.py`

@@ -8,6 +8,7 @@ Usage:
     agent-memory context       Build compact context pack for a task
     agent-memory finish        Update core memory after a task
     agent-memory install       Install framework into another project
+    agent-memory upgrade       Refresh managed files in an installed project
     agent-memory optimize      Detect stale/bloated memory and refresh index
     agent-memory doctor        Check setup, memory health, retrieval, hooks
 
@@ -411,10 +412,24 @@ When context feels stale, memory files get large, or after a few meaningful task
 python scripts/agent-memory optimize --apply
 ```
 
+When setup or memory health is unclear, run:
+
+```bash
+python scripts/agent-memory doctor
+```
+
 This performs safe memory cleanup and refreshes retrieval. Do not run it before every tiny task; use it as periodic maintenance so optimization stays automatic without slowing normal work.
 
 Do not ask the user to remember these commands; run them automatically.
 """
+
+MANAGED_HOOK_START = "<!-- agent-memory:managed:start -->"
+MANAGED_HOOK_END = "<!-- agent-memory:managed:end -->"
+
+
+def _managed_agent_hook_block() -> str:
+    return f"{MANAGED_HOOK_START}\n{AGENT_HOOK_TEMPLATE.strip()}\n{MANAGED_HOOK_END}\n"
+
 
 AGENT_HOOK_FILES = {
     "CLAUDE.md": AGENT_HOOK_TEMPLATE,
@@ -590,6 +605,100 @@ def cmd_install(args):
     print(f"\nInstalled Agent Memory Framework in {target}")
     print(f"Done: {created} files created, {skipped} existing files preserved")
     print('Next: python scripts/agent-memory context "<task>"')
+
+
+def _upsert_managed_block(text: str, block: str) -> tuple[str, str]:
+    """Insert or replace the Agent Memory managed block while preserving custom text."""
+    if MANAGED_HOOK_START in text and MANAGED_HOOK_END in text:
+        start = text.index(MANAGED_HOOK_START)
+        end = text.index(MANAGED_HOOK_END, start) + len(MANAGED_HOOK_END)
+        new_text = text[:start].rstrip() + "\n\n" + block.strip() + "\n" + text[end:].lstrip()
+        return new_text.rstrip() + "\n", "updated"
+    if text.strip().startswith("# Agent Memory Auto-Hooks"):
+        return block, "replaced legacy"
+    if text.strip():
+        return text.rstrip() + "\n\n" + block, "appended"
+    return block, "created"
+
+
+def cmd_upgrade(args):
+    """Safely refresh generated framework files in an existing target project."""
+    source_root = _source_root()
+    target = Path(args.target).expanduser().resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    ai_dir = target / ".ai"
+    ai_dir.mkdir(parents=True, exist_ok=True)
+
+    created = 0
+    updated = 0
+    preserved = 0
+
+    for fname, content in TEMPLATES.items():
+        path = ai_dir / fname
+        if path.exists():
+            preserved += 1
+        else:
+            path.write_text(content.strip() + "\n", encoding="utf-8")
+            _info(f"Created .ai/{fname}")
+            created += 1
+
+    block = _managed_agent_hook_block()
+    for rel in AGENT_HOOK_FILES:
+        path = target / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        old_text = path.read_text(encoding="utf-8") if path.exists() else ""
+        new_text, action = _upsert_managed_block(old_text, block)
+        if new_text != old_text:
+            path.write_text(new_text, encoding="utf-8")
+            _info(f"{action.title()} managed block in {rel}")
+            if action == "created":
+                created += 1
+            else:
+                updated += 1
+        else:
+            _info(f"{rel} already current")
+            preserved += 1
+
+    scripts_dir = target / "scripts"
+    scripts_dir.mkdir(parents=True, exist_ok=True)
+    cli_dst = scripts_dir / "agent-memory"
+    shutil.copy2(source_root / "scripts" / "agent-memory", cli_dst)
+    cli_dst.chmod(0o755)
+    _info("Refreshed scripts/agent-memory")
+    updated += 1
+
+    _copytree_clean(source_root / "scripts" / "memory_query", scripts_dir / "memory_query")
+    _info("Refreshed scripts/memory_query")
+    updated += 1
+
+    hooks_dir = target / ".githooks"
+    hooks_dir.mkdir(parents=True, exist_ok=True)
+    hook_path = hooks_dir / "pre-commit"
+    if hook_path.exists():
+        preserved += 1
+        _warn(".githooks/pre-commit already exists — leaving hook unchanged")
+    else:
+        hook_path.write_text(_precommit_hook_script().strip() + "\n", encoding="utf-8")
+        hook_path.chmod(0o755)
+        _info("Created .githooks/pre-commit")
+        created += 1
+
+    if (target / ".git").exists():
+        result = subprocess.run(
+            ["git", "config", "core.hooksPath", ".githooks"],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            _info("Enabled pre-commit validation (core.hooksPath = .githooks)")
+        else:
+            _warn("Could not enable git hook automatically; run: git config core.hooksPath .githooks")
+
+    print(f"\nUpgraded Agent Memory Framework in {target}")
+    print(f"Done: {created} files created, {updated} files refreshed, {preserved} files preserved")
+    print("Next: python scripts/agent-memory doctor")
 
 
 def cmd_validate(args):
@@ -1282,6 +1391,7 @@ def main():
   agent-memory context "task"  Build compact context pack for a task
   agent-memory finish --summary "done"  Update memory after a task
   agent-memory install --target ../app  Install into another project
+  agent-memory upgrade --target ../app  Refresh managed files safely
   agent-memory optimize        Report memory bloat/staleness
   agent-memory index           Build BM25 search index
   agent-memory query "terms"   BM25 search (ranked results)
@@ -1324,6 +1434,10 @@ def main():
     install_p = sub.add_parser("install", help="Install framework into another project")
     install_p.add_argument("--target", default=".", help="Target project directory (default: current directory)")
     install_p.set_defaults(func=cmd_install)
+
+    upgrade_p = sub.add_parser("upgrade", help="Refresh managed framework files in an existing project")
+    upgrade_p.add_argument("--target", default=".", help="Target project directory (default: current directory)")
+    upgrade_p.set_defaults(func=cmd_upgrade)
 
     idx_p = sub.add_parser("index", help="Build BM25 search index for .ai/ files")
     idx_p.set_defaults(func=cmd_index)

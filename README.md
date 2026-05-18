@@ -87,6 +87,7 @@ The old `graph-memory.md` was plain text — agents parsed it inconsistently and
 
 ```bash
 python scripts/agent-memory install --target ../my-project  # Drop-in setup for another project
+python scripts/agent-memory upgrade --target ../my-project  # Refresh managed hooks/CLI safely
 python scripts/agent-memory init        # Initialize .ai/ files (safe to re-run)
 python scripts/agent-memory validate    # Check all files exist and have content
 python scripts/agent-memory doctor      # One-command setup/memory/index/hook health check
@@ -119,6 +120,24 @@ Behavior:
 - Enables `git config core.hooksPath .githooks` when the target is a Git repo
 
 Use this for existing app projects. Use `init` only inside a repo that already has this CLI and `AGENTS.md`.
+
+### `upgrade`
+
+Refreshes managed framework files in an already-installed project without overwriting custom instructions:
+
+```bash
+python scripts/agent-memory upgrade --target ../my-project
+```
+
+Behavior:
+- Adds missing `.ai/` templates but preserves existing memory files
+- Refreshes `scripts/agent-memory` and `scripts/memory_query/`
+- Creates missing agent hook files
+- Appends or replaces only the marked Agent Memory managed block in `CLAUDE.md`, `.cursorrules`, `.codex/AGENTS.md`, and `HERMES.md`
+- Preserves custom content outside `<!-- agent-memory:managed:start -->` / `<!-- agent-memory:managed:end -->`
+- Creates missing pre-commit hook and enables `core.hooksPath` when possible
+
+Use this after pulling a newer framework version into projects that already have custom agent instructions.
 
 ### `init`
 

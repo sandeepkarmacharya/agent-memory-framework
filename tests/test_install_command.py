@@ -41,6 +41,7 @@ def test_install_bootstraps_target_project_without_existing_agents_file(tmp_path
         assert 'python scripts/agent-memory context "<task>"' in text
         assert 'python scripts/agent-memory finish --summary "<what changed>" --next "<next task>"' in text
         assert "python scripts/agent-memory optimize" in text
+        assert "python scripts/agent-memory doctor" in text
         assert "periodic maintenance" in text
 
     hooks_path = subprocess.run(
@@ -87,3 +88,42 @@ def test_install_preserves_existing_agent_hook_files(tmp_path):
     assert (project / "CLAUDE.md").read_text(encoding="utf-8") == "# Custom Claude instructions\n"
     assert "CLAUDE.md already exists" in result.stdout
     assert 'python scripts/agent-memory context "<task>"' in (project / ".cursorrules").read_text(encoding="utf-8")
+
+
+def test_upgrade_appends_managed_hook_block_without_overwriting_custom_content(tmp_path):
+    project = tmp_path / "upgrade-custom"
+    project.mkdir()
+    (project / "CLAUDE.md").write_text("# Custom Claude instructions\n\nKeep my local rules.\n", encoding="utf-8")
+
+    result = run_cli(ROOT, "upgrade", "--target", str(project))
+
+    assert result.returncode == 0, result.stderr
+    text = (project / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "# Custom Claude instructions" in text
+    assert "Keep my local rules." in text
+    assert "<!-- agent-memory:managed:start -->" in text
+    assert 'python scripts/agent-memory context "<task>"' in text
+    assert "python scripts/agent-memory doctor" in text
+    assert "Upgraded Agent Memory Framework" in result.stdout
+
+
+def test_upgrade_replaces_existing_managed_hook_block_without_duplicates(tmp_path):
+    project = tmp_path / "upgrade-managed"
+    project.mkdir()
+    old_block = """# Local rules
+
+<!-- agent-memory:managed:start -->
+old managed instructions
+<!-- agent-memory:managed:end -->
+"""
+    (project / "HERMES.md").write_text(old_block, encoding="utf-8")
+
+    result = run_cli(ROOT, "upgrade", "--target", str(project))
+
+    assert result.returncode == 0, result.stderr
+    text = (project / "HERMES.md").read_text(encoding="utf-8")
+    assert "# Local rules" in text
+    assert "old managed instructions" not in text
+    assert text.count("<!-- agent-memory:managed:start -->") == 1
+    assert text.count("<!-- agent-memory:managed:end -->") == 1
+    assert "python scripts/agent-memory optimize --apply" in text

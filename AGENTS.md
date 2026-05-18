@@ -32,6 +32,7 @@ A `scripts/agent-memory` CLI is available for common operations:
 | Command | Action |
 |---|---|
 | `python scripts/agent-memory install --target <path>` | Drop-in install into another project; creates agent auto-hook files |
+| `python scripts/agent-memory upgrade --target <path>` | Refresh managed hooks/CLI while preserving custom project instructions |
 | `python scripts/agent-memory init` | Initialize or repair `.ai/` memory files |
 | `python scripts/agent-memory validate` | Check all files exist and have valid content |
 | `python scripts/agent-memory doctor [--max-bytes N]` | One-command setup/memory/index/hook health check |
